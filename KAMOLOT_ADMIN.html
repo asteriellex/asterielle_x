@@ -1,0 +1,2137 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>KAMOLOT — Administrator Paneli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0f14;
+  --surface:#121820;
+  --elevated:#1a222d;
+  --elevated2:#222c3a;
+  --border:rgba(255,255,255,0.08);
+  --border-focus:rgba(16,185,129,0.5);
+  --emerald:#10b981;
+  --emerald-hover:#059669;
+  --emerald-glow:rgba(16,185,129,0.18);
+  --gold:#e5b842;
+  --gold-glow:rgba(229,184,66,0.2);
+  --text-main:#f3f4f6;
+  --text-muted:#9ca3af;
+  --text-dim:#6b7280;
+  --danger:#ef4444;
+  --danger-bg:rgba(239,68,68,0.1);
+  --success:#10b981;
+  --success-bg:rgba(16,185,129,0.1);
+  --radius-sm:8px;
+  --radius-md:12px;
+  --radius-lg:16px;
+  --radius-xl:20px;
+}
+body{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text-main);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;border:none;font-family:inherit;background:none;color:inherit}
+input,select,textarea{font-family:inherit;color:var(--text-main);outline:none}
+.serif{font-family:'Playfair Display',serif}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.3)}
+
+/* LOGIN SCREEN */
+#loginScreen{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+  padding:24px;
+  background:radial-gradient(circle at top center, rgba(16,185,129,0.08), transparent 70%);
+}
+.login-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-xl);
+  padding:40px;
+  width:100%;
+  max-width:440px;
+  box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);
+}
+.login-header{text-align:center;margin-bottom:30px}
+.brand-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 14px;
+  background:var(--emerald-glow);
+  border:1px solid rgba(16,185,129,0.25);
+  border-radius:100px;
+  color:var(--emerald);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:0.05em;
+  text-transform:uppercase;
+  margin-bottom:14px;
+}
+.login-title{font-size:26px;font-weight:700;color:#fff;margin-bottom:8px}
+.login-sub{font-size:13px;color:var(--text-muted);line-height:1.5}
+.form-group{margin-bottom:18px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em}
+.form-input{
+  width:100%;
+  background:var(--elevated);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:12px 16px;
+  font-size:14px;
+  color:#fff;
+  transition:all 0.2s;
+}
+.form-input:focus{
+  border-color:var(--emerald);
+  box-shadow:0 0 0 3px var(--emerald-glow);
+  background:var(--elevated2);
+}
+.btn-primary{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+  background:var(--emerald);
+  color:#fff;
+  font-weight:600;
+  font-size:14px;
+  padding:13px 20px;
+  border-radius:var(--radius-md);
+  transition:all 0.2s;
+  box-shadow:0 4px 14px var(--emerald-glow);
+}
+.btn-primary:hover{background:var(--emerald-hover);transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0)}
+.login-hint{
+  margin-top:24px;
+  padding:12px 16px;
+  background:rgba(255,255,255,0.03);
+  border:1px dashed var(--border);
+  border-radius:var(--radius-md);
+  font-size:12px;
+  color:var(--text-muted);
+  line-height:1.6;
+}
+.login-hint strong{color:var(--gold)}
+
+/* ADMIN APP LAYOUT */
+#adminApp{display:none;min-height:100vh}
+.admin-layout{display:flex;min-height:100vh}
+.sidebar{
+  width:260px;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  position:fixed;
+  top:0;
+  bottom:0;
+  left:0;
+  z-index:40;
+}
+.sidebar-logo{
+  padding:24px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.logo-wrap{display:flex;align-items:center;gap:12px}
+.logo-icon{
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  background:linear-gradient(135deg,var(--emerald),#047857);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-weight:800;
+  font-size:16px;
+  box-shadow:0 4px 10px var(--emerald-glow);
+}
+.logo-text{font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.02em}
+.logo-badge{font-size:10px;font-weight:700;padding:2px 6px;background:var(--gold-glow);color:var(--gold);border-radius:4px;border:1px solid rgba(229,184,66,0.3)}
+.sidebar-nav{padding:20px 12px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.nav-label{font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;padding:12px 10px 6px}
+.nav-item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 14px;
+  border-radius:var(--radius-md);
+  font-size:13px;
+  font-weight:600;
+  color:var(--text-muted);
+  transition:all 0.15s;
+  cursor:pointer;
+}
+.nav-item:hover{background:rgba(255,255,255,0.04);color:#fff}
+.nav-item.active{background:var(--emerald-glow);color:var(--emerald);border:1px solid rgba(16,185,129,0.25)}
+.nav-icon{width:18px;height:18px;display:flex;align-items:center;justify-content:center}
+.sidebar-bottom{
+  padding:16px;
+  border-top:1px solid var(--border);
+  background:rgba(0,0,0,0.15);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.sidebar-link-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+  padding:9px;
+  border-radius:var(--radius-sm);
+  background:rgba(255,255,255,0.05);
+  border:1px solid var(--border);
+  font-size:12px;
+  font-weight:600;
+  color:var(--text-muted);
+  transition:all 0.15s;
+}
+.sidebar-link-btn:hover{background:rgba(255,255,255,0.1);color:#fff}
+.sidebar-user{display:flex;align-items:center;justify-content:space-between;padding-top:4px}
+.user-info{display:flex;align-items:center;gap:10px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--elevated);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:var(--emerald)}
+.user-name{font-size:13px;font-weight:600;color:#fff}
+.user-role{font-size:11px;color:var(--text-dim)}
+.logout-btn{padding:6px;color:var(--text-dim);border-radius:6px;transition:0.15s}
+.logout-btn:hover{color:var(--danger);background:var(--danger-bg)}
+
+/* MAIN CONTENT */
+.main-content{margin-left:260px;flex:1;padding:32px;max-width:1440px}
+.header-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:28px;
+  gap:16px;
+  flex-wrap:wrap;
+}
+.page-title{font-size:24px;font-weight:700;color:#fff;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--text-muted)}
+.header-actions{display:flex;align-items:center;gap:12px}
+
+/* STATS GRID */
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));
+  gap:18px;
+  margin-bottom:32px;
+}
+.stat-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  position:relative;
+  overflow:hidden;
+}
+.stat-card::after{
+  content:'';
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--emerald),transparent);
+  opacity:0.3;
+}
+.stat-head{display:flex;align-items:center;justify-content:space-between}
+.stat-label{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em}
+.stat-icon{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;color:var(--emerald);font-size:16px}
+.stat-val{font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.03em}
+.stat-sub{font-size:12px;color:var(--text-dim)}
+
+/* TABLE CARD */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-xl);
+  overflow:hidden;
+  margin-bottom:28px;
+}
+.card-header{
+  padding:20px 24px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+}
+.card-title{font-size:16px;font-weight:700;color:#fff}
+.search-filter-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.search-input{
+  background:var(--elevated);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:9px 14px;
+  font-size:13px;
+  color:#fff;
+  width:240px;
+}
+.search-input:focus{border-color:var(--emerald)}
+.genre-select{
+  background:var(--elevated);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:9px 14px;
+  font-size:13px;
+  color:#fff;
+}
+
+/* DATA TABLE */
+.table-wrap{width:100%;overflow-x:auto}
+table{width:100%;border-collapse:collapse;text-align:left}
+th{
+  padding:14px 20px;
+  font-size:11px;
+  font-weight:700;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  background:rgba(0,0,0,0.2);
+  border-bottom:1px solid var(--border);
+}
+td{
+  padding:14px 20px;
+  font-size:13px;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  vertical-align:middle;
+}
+tr:hover td{background:rgba(255,255,255,0.015)}
+.book-cell{display:flex;align-items:center;gap:14px}
+.book-thumb{
+  width:38px;
+  height:52px;
+  border-radius:4px;
+  object-fit:cover;
+  background:var(--elevated);
+  box-shadow:0 3px 6px rgba(0,0,0,0.4);
+  flex-shrink:0;
+}
+.book-title-bold{font-weight:600;color:#fff;line-height:1.3;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book-author-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:3px 8px;
+  border-radius:6px;
+  font-size:11px;
+  font-weight:600;
+}
+.badge-emerald{background:var(--emerald-glow);color:var(--emerald);border:1px solid rgba(16,185,129,0.3)}
+.badge-gold{background:var(--gold-glow);color:var(--gold);border:1px solid rgba(229,184,66,0.3)}
+.badge-gray{background:rgba(255,255,255,0.06);color:var(--text-muted);border:1px solid var(--border)}
+.badge-danger{background:var(--danger-bg);color:var(--danger);border:1px solid rgba(239,68,68,0.3)}
+.actions-cell{display:flex;align-items:center;gap:8px}
+.action-btn{
+  padding:6px 10px;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:600;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);
+  color:var(--text-muted);
+  transition:all 0.15s;
+}
+.action-btn:hover{background:rgba(255,255,255,0.1);color:#fff}
+.action-btn.btn-edit:hover{border-color:var(--emerald);color:var(--emerald)}
+.action-btn.btn-del:hover{border-color:var(--danger);color:var(--danger);background:var(--danger-bg)}
+
+/* MODAL */
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.75);
+  backdrop-filter:blur(4px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:100;
+  padding:20px;
+}
+.modal-overlay.open{display:flex}
+.modal-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-xl);
+  width:100%;
+  max-width:720px;
+  max-height:92vh;
+  overflow-y:auto;
+  box-shadow:0 30px 60px rgba(0,0,0,0.7);
+  display:flex;
+  flex-direction:column;
+}
+.modal-header{
+  padding:20px 24px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;
+  top:0;
+  background:var(--surface);
+  z-index:10;
+}
+.modal-title{font-size:18px;font-weight:700;color:#fff}
+.modal-close{color:var(--text-dim);font-size:20px;padding:4px;border-radius:6px}
+.modal-close:hover{color:#fff;background:rgba(255,255,255,0.06)}
+.modal-body{padding:24px;display:flex;flex-direction:column;gap:18px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-full{grid-column:1 / -1}
+.form-textarea{
+  width:100%;
+  min-height:90px;
+  background:var(--elevated);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:12px 16px;
+  font-size:13px;
+  color:#fff;
+  resize:vertical;
+}
+.form-textarea:focus{border-color:var(--emerald)}
+.modal-footer{
+  padding:18px 24px;
+  border-top:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:12px;
+  background:rgba(0,0,0,0.15);
+}
+.btn-secondary{
+  padding:11px 18px;
+  border-radius:var(--radius-md);
+  background:rgba(255,255,255,0.05);
+  border:1px solid var(--border);
+  font-size:13px;
+  font-weight:600;
+  color:var(--text-muted);
+}
+.btn-secondary:hover{background:rgba(255,255,255,0.1);color:#fff}
+
+/* UPLOAD CARDS WITH VISUAL PREVIEW */
+.upload-card{
+  background:var(--elevated);
+  border:1.5px dashed var(--border);
+  border-radius:var(--radius-md);
+  padding:16px;
+  transition:all 0.2s;
+  cursor:pointer;
+}
+.upload-card:hover{
+  border-color:var(--emerald);
+  background:rgba(16,185,129,0.04);
+}
+.upload-card.has-file{
+  border-style:solid;
+  border-color:rgba(16,185,129,0.4);
+  background:rgba(16,185,129,0.06);
+}
+.upload-preview-row{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.upload-thumb{
+  width:56px;
+  height:76px;
+  border-radius:6px;
+  object-fit:cover;
+  background:#000;
+  border:1px solid var(--border);
+  box-shadow:0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* TOAST */
+#toast{
+  position:fixed;
+  bottom:24px;
+  right:24px;
+  padding:12px 20px;
+  background:var(--elevated2);
+  border:1px solid var(--emerald);
+  border-radius:var(--radius-md);
+  color:#fff;
+  font-size:13px;
+  font-weight:600;
+  box-shadow:0 10px 25px rgba(0,0,0,0.5);
+  display:none;
+  align-items:center;
+  gap:10px;
+  z-index:200;
+  animation:slideUp 0.25s ease;
+}
+#toast.show{display:flex}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main-content{margin-left:0;padding:16px}
+  .form-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- 1. LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="brand-badge">Xavfsiz Kirish</div>
+      <h1 class="login-title serif">KAMOLOT Administrator</h1>
+      <p class="login-sub">Faqat vakolatli boshqaruvchilar uchun himoyalangan tizim. Kitoblar bazasini boshqarish paneli.</p>
+    </div>
+
+    <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+      <div class="form-group">
+        <label class="form-label">Admin Login / Username</label>
+        <input type="text" id="loginUsername" class="form-input" value="admin" required placeholder="admin" autocomplete="username"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Parol</label>
+        <input type="password" id="loginPassword" class="form-input" value="Kamolot@Admin2024!" required placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <button type="submit" class="btn-primary" id="loginSubmitBtn">
+        <span>Tizimga kirish</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </form>
+
+    <div class="login-hint">
+      <strong>Standart tizim kaliti:</strong><br/>
+      Login: <code>admin</code> &nbsp;|&nbsp; Parol: <code>Kamolot@Admin2024!</code><br/>
+      <span style="font-size:11px;color:var(--text-dim)">Ruxsatlar server tomonida qat'iy tekshiriladi (RBAC).</span>
+    </div>
+  </div>
+</div>
+
+<!-- 2. ADMIN DASHBOARD APP -->
+<div id="adminApp">
+  <div class="admin-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-wrap">
+          <div class="logo-icon">K</div>
+          <div>
+            <div class="logo-text serif">KAMOLOT</div>
+            <div style="font-size:10px;color:var(--text-dim);font-weight:600">Boshqaruv Markazi</div>
+          </div>
+        </div>
+        <span class="logo-badge">ADMIN</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-label">Asosiy menyu</div>
+        <div class="nav-item active" onclick="switchSection('books')" id="nav-books">
+          <span class="nav-icon">📚</span>
+          <span>Kitoblar bazasi</span>
+        </div>
+        <div class="nav-item" onclick="openBookModal()" id="nav-add">
+          <span class="nav-icon">➕</span>
+          <span>Yangi kitob qo'shish</span>
+        </div>
+        <div class="nav-item" onclick="switchSection('users')" id="nav-users">
+          <span class="nav-icon">👥</span>
+          <span>Foydalanuvchilar</span>
+        </div>
+        <div class="nav-item" onclick="switchSection('sources')" id="nav-sources">
+          <span class="nav-icon">🏛️</span>
+          <span>Qonuniy manbalar</span>
+        </div>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <a href="/" target="_blank" class="sidebar-link-btn" title="Foydalanuvchilar saytini yangi oynada ochish">
+          <span>🌐 Foydalanuvchilar sayti</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+        </a>
+        <div class="sidebar-user">
+          <div class="user-info">
+            <div class="user-avatar">A</div>
+            <div>
+              <div class="user-name" id="adminNameDisplay">Bosh Admin</div>
+              <div class="user-role">Cheksiz ruxsat</div>
+            </div>
+          </div>
+          <button class="logout-btn" onclick="handleAdminLogout()" title="Chiqish">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN BODY -->
+    <main class="main-content">
+      <!-- HEADER -->
+      <div class="header-row">
+        <div>
+          <h1 class="page-title serif" id="sectionTitle">Kitoblar boshqaruvi</h1>
+          <p class="page-sub" id="sectionSub">Barcha PDF va audiokitoblarni qo'shish, tahrirlash hamda o'chirish</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn-primary" onclick="openBookModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Yangi kitob qo'shish</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI METRICS -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-label">Jami kitoblar</span>
+            <div class="stat-icon">📖</div>
+          </div>
+          <div class="stat-val" id="statTotalBooks">0</div>
+          <div class="stat-sub">Bazada mavjud barcha asarlar</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-label">Audiokitoblar</span>
+            <div class="stat-icon">🎧</div>
+          </div>
+          <div class="stat-val" id="statAudioBooks">0</div>
+          <div class="stat-sub">Ovozli ijroga ega asarlar</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-label">PDF / Mutolaa</span>
+            <div class="stat-icon">📄</div>
+          </div>
+          <div class="stat-val" id="statPdfBooks">0</div>
+          <div class="stat-sub">To'liq matnli elektron kitoblar</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-label">Foydalanuvchilar</span>
+            <div class="stat-icon">👥</div>
+          </div>
+          <div class="stat-val" id="statTotalUsers">1</div>
+          <div class="stat-sub">Ro'yxatdan o'tgan kitobxonlar</div>
+        </div>
+      </div>
+
+      <!-- SECTION: BOOKS -->
+      <section id="sectionBooks">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Mavjud kitoblar ro'yxati</div>
+            <div class="search-filter-row">
+              <input type="text" id="bookSearchInput" class="search-input" placeholder="Nomi yoki muallif bo'yicha izlash..." oninput="handleBookSearch()"/>
+              <select id="genreFilterSelect" class="genre-select" onchange="handleBookSearch()">
+                <option value="">Barcha janrlar</option>
+                <option value="fiction">Badiiy adabiyot</option>
+                <option value="history">Tarix</option>
+                <option value="science">Ilm-fan</option>
+                <option value="selfdev">Shaxsiy rivojlanish</option>
+                <option value="children">Bolalar</option>
+                <option value="poetry">She'riyat</option>
+                <option value="business">Biznes</option>
+                <option value="psychology">Psixologiya</option>
+                <option value="philosophy">Falsafa</option>
+                <option value="fantasy">Fantastika</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Kitob va Muallif</th>
+                  <th>Janr</th>
+                  <th>Formatlar</th>
+                  <th>Qonuniy manba</th>
+                  <th>Holati</th>
+                  <th style="text-align:right">Amallar</th>
+                </tr>
+              </thead>
+              <tbody id="booksTableBody">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: USERS -->
+      <section id="sectionUsers" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Ro'yxatdan o'tgan foydalanuvchilar</div>
+            <div style="font-size:12px;color:var(--text-muted)">Oddiy foydalanuvchilar faqat mutolaa huquqiga ega, kitob qo'sha olmaydi.</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Foydalanuvchi</th>
+                  <th>Email / Telefon</th>
+                  <th>Ruxsat (Role)</th>
+                  <th>Holat</th>
+                  <th>Sana</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr>
+                  <td>
+                    <div style="font-weight:600;color:#fff">admin</div>
+                    <div style="font-size:11px;color:var(--text-dim)">Admin Kamolot</div>
+                  </td>
+                  <td>admin@kamolot.uz</td>
+                  <td><span class="badge badge-gold">ADMIN (Cheksiz)</span></td>
+                  <td><span class="badge badge-emerald">Faol</span></td>
+                  <td>2024-yil</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: LEGAL SOURCES -->
+      <section id="sectionSources" style="display:none">
+        <div class="card" style="padding:24px">
+          <div class="card-title" style="margin-bottom:12px">Integratsiya qilingan 6 ta qonuniy manba</div>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6">
+            KAMOLOT platformasi kitoblar, audio va PDF fayllarni faqat rasmiy, qonuniy va erkin tarqatish huquqiga ega manbalardan taqdim etadi.
+          </p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+            <div style="background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px">
+              <div style="font-weight:700;color:#fff;margin-bottom:4px">1. Internet Archive (archive.org)</div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Jahon miqyosidagi ochiq raqamli kutubxona va audiokitoblar arxivi.</p>
+              <a href="https://archive.org/" target="_blank" style="font-size:12px;color:var(--emerald);text-decoration:underline">archive.org saytiga o'tish &rarr;</a>
+            </div>
+            <div style="background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px">
+              <div style="font-weight:700;color:#fff;margin-bottom:4px">2. Project Gutenberg (gutenberg.org)</div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">70,000 dan ortiq bepul va Public Domain kitoblar ombori.</p>
+              <a href="https://www.gutenberg.org/" target="_blank" style="font-size:12px;color:var(--emerald);text-decoration:underline">gutenberg.org saytiga o'tish &rarr;</a>
+            </div>
+            <div style="background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px">
+              <div style="font-weight:700;color:#fff;margin-bottom:4px">3. Open Library (openlibrary.org)</div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Internet Archive tomonidan qo'llab-quvvatlanuvchi global kutubxona katalogi.</p>
+              <a href="https://openlibrary.org/" target="_blank" style="font-size:12px;color:var(--emerald);text-decoration:underline">openlibrary.org saytiga o'tish &rarr;</a>
+            </div>
+            <div style="background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px">
+              <div style="font-weight:700;color:#fff;margin-bottom:4px">4. Milliy kutubxona (natlib.uz)</div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Alisher Navoiy nomidagi O'zbekiston Milliy kutubxonasi fondi.</p>
+              <a href="https://natlib.uz/" target="_blank" style="font-size:12px;color:var(--emerald);text-decoration:underline">natlib.uz saytiga o'tish &rarr;</a>
+            </div>
+            <div style="background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px">
+              <div style="font-weight:700;color:#fff;margin-bottom:4px">5. ZiyoNET Portali (ziyonet.uz)</div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">O'zbekistonning axborot ta'lim tarmog'i va erkin o'quv resurslari.</p>
+              <a href="https://ziyonet.uz/" target="_blank" style="font-size:12px;color:var(--emerald);text-decoration:underline">ziyonet.uz saytiga o'tish &rarr;</a>
+            </div>
+            <div style="background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px">
+              <div style="font-weight:700;color:#fff;margin-bottom:4px">6. Google Books (books.google.com)</div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Rasmiy qonuniy bibliografik manbalar va erkin preview parchalari.</p>
+              <a href="https://books.google.com/" target="_blank" style="font-size:12px;color:var(--emerald);text-decoration:underline">books.google.com saytiga o'tish &rarr;</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- 3. ADD / EDIT BOOK MODAL -->
+<div class="modal-overlay" id="bookModalOverlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 class="modal-title serif" id="bookModalHeader">Yangi kitob qo'shish</h2>
+      <button class="modal-close" onclick="closeBookModal()">&times;</button>
+    </div>
+    <form id="bookForm" onsubmit="handleSaveBook(event)">
+      <input type="hidden" id="editBookId"/>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Kitob nomi *</label>
+            <input type="text" id="bTitle" class="form-input" required placeholder="Masalan: O'tkan kunlar"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Muallif *</label>
+            <input type="text" id="bAuthor" class="form-input" required placeholder="Masalan: Abdulla Qodiriy"/>
+          </div>
+
+          <div class="form-group form-full">
+            <label class="form-label">Qisqacha tavsif (Annotatsiya)</label>
+            <textarea id="bDesc" class="form-textarea" placeholder="Kitob mazmuni, g'oyasi va qahramonlari haqida qisqacha ma'lumot..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Janr</label>
+            <select id="bGenre" class="form-input">
+              <option value="1">Badiiy adabiyot</option>
+              <option value="2">Tarix</option>
+              <option value="3">Ilm-fan</option>
+              <option value="4">Psixologiya</option>
+              <option value="5">Fantastika</option>
+              <option value="6">Biznes</option>
+              <option value="7">Shaxsiy rivojlanish</option>
+              <option value="8">Bolalar</option>
+              <option value="9">She'riyat</option>
+              <option value="11">Falsafa</option>
+              <option value="12">Tarjimai hol</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Til va Nashr yili</label>
+            <div style="display:flex;gap:8px">
+              <select id="bLang" class="form-input" style="flex:1">
+                <option value="uz">O'zbek</option>
+                <option value="ru">Rus</option>
+                <option value="en">Ingliz</option>
+              </select>
+              <input type="number" id="bYear" class="form-input" style="width:100px" placeholder="2024"/>
+            </div>
+          </div>
+
+          <!-- MUQOVA RASMI YUKLASH (MAXSUS RASM TANLASH MAYDONI) -->
+          <div class="form-group form-full">
+            <label class="form-label">1. Kitob muqovasi rasmi (O'zingiz tanlang)</label>
+            <div class="upload-card" id="coverUploadCard" onclick="document.getElementById('bCoverFile').click()">
+              <div class="upload-preview-row">
+                <img id="coverPreviewImg" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=200" class="upload-thumb" alt="Preview"/>
+                <div style="flex:1;min-width:0">
+                  <div id="coverStatusText" style="font-weight:700;font-size:13px;color:#fff">
+                    📸 Kompyuterdan o'zingiz xohlagan rasmni tanlang
+                  </div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:3px">
+                    JPG, PNG, WebP formatlari qo'llab-quvvatlanadi (Avtomatik saqlanadi)
+                  </div>
+                  <div style="margin-top:6px;display:flex;gap:8px">
+                    <span class="badge badge-emerald" id="coverSelectedBadge" style="display:none">✓ Rasm yuklandi</span>
+                    <button type="button" class="action-btn" style="padding:4px 8px;font-size:11px" onclick="event.stopPropagation(); document.getElementById('bCoverFile').click()">Fayl tanlash</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <input type="file" id="bCoverFile" accept="image/*" style="display:none" onchange="handleCoverFileSelected(this)"/>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+              <span style="font-size:11px;color:var(--text-dim)">Yoki rasm URL havolasi:</span>
+              <input type="text" id="bCoverUrl" class="form-input" style="flex:1;padding:6px 10px;font-size:12px" placeholder="https://... rasm havolasi (ixtiyoriy)"/>
+            </div>
+          </div>
+
+          <!-- PDF KITOB FAYLI YUKLASH -->
+          <div class="form-group form-full">
+            <label class="form-label">2. PDF kitob fayli (Foydalanuvchilarga to'liq chiqadi)</label>
+            <div class="upload-card" id="pdfUploadCard" onclick="document.getElementById('bPdfFile').click()">
+              <div style="display:flex;align-items:center;gap:14px">
+                <div style="width:48px;height:48px;border-radius:10px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--danger)">
+                  📄
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div id="pdfStatusText" style="font-weight:700;font-size:13px;color:#fff">
+                    📂 PDF faylni tanlang (kompyuteringizdan yuklang)
+                  </div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:3px">
+                    Foydalanuvchilar saytida ushbu PDF varaqlanadigan interaktiv o'quvchi orqali ochiladi
+                  </div>
+                  <div style="margin-top:6px;display:flex;gap:8px">
+                    <span class="badge badge-emerald" id="pdfSelectedBadge" style="display:none">✓ PDF tanlandi</span>
+                    <button type="button" class="action-btn" style="padding:4px 8px;font-size:11px" onclick="event.stopPropagation(); document.getElementById('bPdfFile').click()">PDF tanlash</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <input type="file" id="bPdfFile" accept=".pdf" style="display:none" onchange="handlePdfFileSelected(this)"/>
+
+            <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+              <span style="font-size:11px;color:var(--text-dim)">Yoki PDF URL:</span>
+              <input type="text" id="bPdfUrl" class="form-input" style="flex:1;padding:6px 10px;font-size:12px" placeholder="https://.../kitob.pdf"/>
+            </div>
+            <div style="margin-top:6px">
+              <span style="font-size:11px;color:var(--text-dim)">Yoki matnli annotatsiya/kirish bobi (ixtiyoriy):</span>
+              <textarea id="bContent" class="form-textarea" style="min-height:60px;margin-top:4px" placeholder="Asar matni yoki kirish qismi..."></textarea>
+            </div>
+          </div>
+
+          <!-- AUDIOKITOB -->
+          <div class="form-group form-full">
+            <label class="form-label">3. Audiokitob (Audio fayl yoki MP3 havola)</label>
+            <div class="upload-card" onclick="document.getElementById('bAudioFile').click()">
+              <div style="display:flex;align-items:center;gap:14px">
+                <div style="width:40px;height:40px;border-radius:10px;background:rgba(229,184,66,0.15);border:1px solid rgba(229,184,66,0.3);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--gold)">
+                  🎧
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div id="audioStatusText" style="font-weight:600;font-size:12px;color:#fff">
+                    Audio faylni tanlang (MP3, M4A)
+                  </div>
+                  <div style="font-size:11px;color:var(--text-muted)">Sticky audiopleyerda to'liq ijro etiladi</div>
+                </div>
+              </div>
+            </div>
+            <input type="file" id="bAudioFile" accept="audio/*" style="display:none" onchange="handleAudioFileSelected(this)"/>
+            <input type="text" id="bAudioUrl" class="form-input" style="margin-top:6px;padding:6px 10px;font-size:12px" placeholder="Yoki audio MP3 havolasi: https://..."/>
+          </div>
+
+          <!-- 4. TIRIK KITOB VIDEO (Ixtiyoriy) -->
+          <div class="form-group form-full">
+            <label class="form-label">4. Tirik Kitob — Video (O'z videongizni yuklang yoki havola bering - Ixtiyoriy)</label>
+            <div class="upload-card" onclick="document.getElementById('bLivingVideoFile').click()">
+              <div style="display:flex;align-items:center;gap:14px">
+                <div style="width:40px;height:40px;border-radius:10px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--danger)">
+                  🎬
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div id="livingVideoStatusText" style="font-weight:600;font-size:12px;color:#fff">
+                    Tirik Kitob videosini tanlang (MP4, WebM)
+                  </div>
+                  <div style="font-size:11px;color:var(--text-muted)">Foydalanuvchi "🎬 Tirik kitob — videoda ko'rish" tugmasini bosganda ushbu video ochiladi</div>
+                </div>
+              </div>
+            </div>
+            <input type="file" id="bLivingVideoFile" accept="video/mp4,video/webm,video/mkv,video/*" style="display:none" onchange="handleLivingVideoFileSelected(this)"/>
+            <input type="text" id="bLivingVideoUrl" class="form-input" style="margin-top:6px;padding:6px 10px;font-size:12px" placeholder="Yoki video havolasi: /uploads/videos/...mp4 yoki https://...mp4"/>
+          </div>
+
+          <!-- QONUNIY MANBA VA LITSENZIYA -->
+          <div class="form-group form-full">
+            <label class="form-label">5. Qonuniy manba va Litsenziya</label>
+            <select id="bLegalSourcePreset" class="form-input" onchange="applyLegalPreset(this.value)">
+              <option value="">Manbani tanlang...</option>
+              <option value="natlib">Alisher Navoiy nomidagi O'zbekiston Milliy kutubxonasi (natlib.uz)</option>
+              <option value="archive">Internet Archive (archive.org)</option>
+              <option value="gutenberg">Project Gutenberg (gutenberg.org)</option>
+              <option value="openlibrary">Open Library (openlibrary.org)</option>
+              <option value="ziyonet">ZiyoNET Axborot Ta'lim Portali (ziyonet.uz)</option>
+              <option value="googlebooks">Google Books (books.google.com)</option>
+            </select>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <input type="text" id="bSourceName" class="form-input" placeholder="Manba nomi" style="flex:1"/>
+              <input type="text" id="bSourceUrl" class="form-input" placeholder="https://..." style="flex:1"/>
+            </div>
+            <input type="text" id="bLicense" class="form-input" style="margin-top:8px" placeholder="Litsenziya: masalan, Jamoat Mulki (Public Domain)"/>
+          </div>
+
+          <!-- STATUS TOGGLES -->
+          <div class="form-group form-full" style="display:flex;gap:20px;padding:10px 0">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="bIsFree" checked/>
+              <span>Bepul asar</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="bIsFeatured"/>
+              <span>Tavsiya etilgan (Featured)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="bIsNew" checked/>
+              <span>Yangi asar</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeBookModal()">Bekor qilish</button>
+        <button type="submit" class="btn-primary" id="saveBookBtn" style="width:auto">
+          <span>Saqlash va Foydalanuvchilarga chiqarish</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 4. LIVING BOOK (TIRIK KITOB) MANAGEMENT MODAL -->
+<div class="modal-overlay" id="livingBookModalOverlay" style="display:none">
+  <div class="modal-card" style="max-width:980px;max-height:94vh;display:flex;flex-direction:column">
+    <div class="modal-header">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="badge badge-gold">🎬 TIRIK KITOB BOSHQARUVI</span>
+          <span class="badge badge-emerald" id="lbStatusBadge">Nashr qilingan</span>
+        </div>
+        <h2 class="modal-title serif" id="lbModalBookTitle" style="font-size:18px;margin-top:4px">Kitob nomi</h2>
+      </div>
+      <button class="modal-close" onclick="closeLivingBookModal()">&times;</button>
+    </div>
+
+    <div class="modal-body" style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px">
+      <!-- PIPELINE PROGRESS STATUS BAR -->
+      <div style="background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;font-weight:700;color:#fff">Jarayon Bosqichlari (AI Video & Sahnalar Pipeline)</span>
+          <span style="font-size:11px;color:var(--emerald)" id="lbProgressText">8-10 daqiqalik video va sahnalar tayyor</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:8px" id="lbPipelineSteps">
+          <div style="background:rgba(16,185,129,0.2);color:var(--emerald);padding:8px;border-radius:8px;font-size:11px;text-align:center;font-weight:600">1. Matn Tahlili ✓</div>
+          <div style="background:rgba(16,185,129,0.2);color:var(--emerald);padding:8px;border-radius:8px;font-size:11px;text-align:center;font-weight:600">2. 8-Bobli Ssenariy ✓</div>
+          <div style="background:rgba(16,185,129,0.2);color:var(--emerald);padding:8px;border-radius:8px;font-size:11px;text-align:center;font-weight:600">3. Sahnalar & Video ✓</div>
+          <div style="background:rgba(16,185,129,0.2);color:var(--emerald);padding:8px;border-radius:8px;font-size:11px;text-align:center;font-weight:600" id="lbStep4Badge">4. Saytda E'lon Qilindi ✓</div>
+        </div>
+      </div>
+
+      <!-- VIDEO AND TIMING SECTION -->
+      <div style="background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px">
+        <div style="font-weight:700;color:#fff;font-size:14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="display:flex;align-items:center;gap:8px">
+            <span>🎬</span> Tirik Kitob Video Pleyeri
+            <span class="badge badge-emerald" id="lbVideoSourceBadge">Video mavjud</span>
+          </span>
+          <span style="font-size:11px;color:var(--text-dim)" id="lbDurationText">⏱️ 540 soniya (9 daqiqa 00 soniya)</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <!-- VIDEO SCREEN -->
+          <div style="position:relative;aspect-ratio:16/9;max-height:360px;background:#000;border-radius:12px;overflow:hidden;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 25px rgba(0,0,0,0.5)">
+            <video id="lbAdminVideoPlayer" controls playsinline style="width:100%;height:100%;object-fit:contain;background:#000;display:block"></video>
+            <canvas id="lbAdminCinemaCanvas" width="1280" height="720" style="width:100%;height:100%;object-fit:cover;display:none"></canvas>
+            <div id="lbAdminPlayOverlay" style="position:absolute;z-index:10;display:none;gap:10px">
+              <button class="btn btn-gold" onclick="toggleAdminCinemaPlay()" id="lbAdminPlayBtn" style="padding:10px 20px;font-size:13px;font-weight:700;box-shadow:0 4px 15px rgba(229,184,66,0.4)">▶ Videoni Ko'rish</button>
+            </div>
+            <div style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.8);backdrop-filter:blur(4px);padding:4px 10px;border-radius:6px;border:1px solid rgba(229,184,66,0.4);font-size:11px;font-weight:700;color:var(--gold);pointer-events:none">
+              🔴 TIRIK KITOB • HD • O'ZBEK TILI
+            </div>
+            <div id="lbAdminTimecode" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.8);padding:4px 10px;border-radius:6px;border:1px solid var(--border);font-size:11px;font-family:monospace;color:#fff;pointer-events:none">
+              ⏱️ 0:00 / 9:00
+            </div>
+            <div id="lbAdminSubtitle" style="position:absolute;bottom:14px;left:20px;right:20px;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);padding:8px 14px;border-radius:8px;border:1px solid rgba(229,184,66,0.3);font-size:12px;font-weight:600;color:#fff;text-align:center;display:none">
+              💬 Ssenariy va sahnalar sinxronlandi
+            </div>
+          </div>
+
+          <!-- ADMIN CUSTOM VIDEO UPLOAD CARD -->
+          <div style="background:rgba(229,184,66,0.06);border:2px dashed rgba(229,184,66,0.5);border-radius:12px;padding:16px;text-align:center">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+              <div style="font-size:26px">📤 🎬</div>
+              <div style="font-weight:700;font-size:14px;color:#fff">O'z Videongizni Kompyuterdan Yuklang</div>
+              <div style="font-size:11px;color:var(--text-muted);max-width:540px">
+                Admin paneldan kitob uchun tayyorlagan video faylingizni (MP4, WebM, MKV) to'g'ridan-to'g'ri yuklang. Foydalanuvchilar aynan siz yuklagan videoni tomosha qilishadi.
+              </div>
+              
+              <div style="margin-top:8px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center">
+                <button type="button" class="btn btn-gold" onclick="document.getElementById('lbVideoFileInput').click()" style="padding:10px 22px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:0 4px 15px rgba(229,184,66,0.35)">
+                  <span>📁</span> Kompyuterdan Video Tanlash va Yuklash
+                </button>
+                <input type="file" id="lbVideoFileInput" accept="video/mp4,video/webm,video/mkv,video/quicktime,video/*" style="display:none" onchange="handleAdminUploadVideoFile(event)"/>
+              </div>
+
+              <!-- Upload Progress Box -->
+              <div id="lbUploadProgressBox" style="display:none;width:100%;max-width:440px;margin-top:12px">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);margin-bottom:4px">
+                  <span id="lbUploadProgressLabel">Yuklanmoqda...</span>
+                  <span id="lbUploadProgressPercent">0%</span>
+                </div>
+                <div style="background:rgba(255,255,255,0.1);height:8px;border-radius:4px;overflow:hidden">
+                  <div id="lbUploadProgressBar" style="background:linear-gradient(90deg, var(--gold), var(--emerald));width:0%;height:100%;transition:width 0.2s"></div>
+                </div>
+              </div>
+              <div id="lbUploadStatusBadge" style="display:none;margin-top:8px;font-size:12px;font-weight:600;color:var(--emerald)"></div>
+            </div>
+
+            <!-- Video URL Input Row -->
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:10px;align-items:flex-end;text-align:left">
+              <div style="flex:1">
+                <label class="form-label" style="font-size:11px;margin-bottom:4px">Yoki Video Havolasi (URL yoki /uploads/videos/...):</label>
+                <input type="text" id="lbVideoUrlInput" class="form-input" style="padding:8px 12px;font-size:12px" placeholder="/uploads/videos/...mp4 yoki https://...mp4" onchange="handleAdminVideoUrlChange(this.value)"/>
+              </div>
+              <button type="button" class="btn btn-secondary" onclick="handleSaveVideoUrlOnly()" style="padding:8px 16px;font-size:12px;white-space:nowrap">
+                💾 Havolani Saqlash
+              </button>
+            </div>
+          </div>
+
+          <!-- OPTIONAL AI PIPELINE NOTICE -->
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(255,255,255,0.02);padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.06)">
+            <div style="font-size:11px;color:var(--text-dim)">
+              ℹ️ Agar o'z videongizni yuklagan bo'lsangiz, AI qayta yaratish tugmasini bosmang — siz yuklagan video saqlanadi.
+            </div>
+            <button type="button" class="btn btn-secondary" onclick="handleAdminRegenerateVideo()" style="display:flex;align-items:center;gap:6px;font-size:11px;padding:6px 12px;color:var(--gold);border-color:rgba(229,184,66,0.3);white-space:nowrap">
+              <span>⚡</span> AI Video Generatsiya Qilish (Ixtiyoriy)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8-CHAPTER SCENARIO EDITOR -->
+      <div style="background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px">
+        <div style="font-weight:700;color:#fff;font-size:13px;margin-bottom:8px">
+          📝 8-Bobli Mantiqiy Ssenariy (Kirish, Muhit, Qahramonlar, Voqealar, Burilishlar, G'oya, Tasavvur, Yakun)
+        </div>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Har bir bob matnini to'g'ridan-to'g'ri tahrirlashingiz mumkin:</p>
+        <div id="lbChaptersList" style="display:flex;flex-direction:column;gap:10px;max-height:280px;overflow-y:auto;padding-right:6px"></div>
+      </div>
+
+      <!-- SCENES GALLERY (5-10 TA RASM) -->
+      <div style="background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-weight:700;color:#fff;font-size:13px">
+            🖼️ Muhim Sahnalar Galereyasi (Rasmlar)
+          </div>
+          <button type="button" class="action-btn" style="background:rgba(16,185,129,0.15);color:var(--emerald);border:1px solid rgba(16,185,129,0.3);padding:4px 10px;font-size:11px" onclick="addCustomSceneToLivingBook()">+ Yangi Sahna Qo'shish</button>
+        </div>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Kitobdagi voqealar, iqtiboslar va rasmlarni tahrirlash:</p>
+        <div id="lbScenesList" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:12px"></div>
+      </div>
+    </div>
+
+    <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center">
+      <div style="display:flex;gap:8px">
+        <button type="button" class="btn-secondary" onclick="handleGenerateLivingBook()" style="color:var(--gold);border-color:rgba(229,184,66,0.3)">
+          ⚡ AI Qayta Yaratish (Regenerate)
+        </button>
+        <button type="button" id="lbPublishToggleBtn" class="btn-secondary" onclick="handleTogglePublishLivingBook()">
+          Nashrni Bekor Qilish
+        </button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="btn-secondary" onclick="closeLivingBookModal()">Yopish</button>
+        <button type="button" class="btn-primary" onclick="handleSaveLivingBook()" style="width:auto">
+          💾 O'zgarishlarni Saqlash
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">
+  <span id="toastIcon">✓</span>
+  <span id="toastMsg">Amal bajarildi</span>
+</div>
+
+<script>
+'use strict';
+
+let adminToken = localStorage.getItem('kamolot_admin_token') || '';
+let currentBooks = [];
+let currentUsers = [];
+
+// SELECTED FILES IN MEMORY (BASE64 & FILE OBJECTS)
+let selectedCoverDataUrl = '';
+let selectedPdfDataUrl = '';
+let selectedAudioDataUrl = '';
+
+// PRESET SOURCES
+const PRESETS = {
+  natlib: { name: "Alisher Navoiy nomidagi O'zbekiston Milliy kutubxonasi (natlib.uz)", url: "https://natlib.uz/", lic: "Ochiq Milliy Kutubxona fondi — Erkin foydalanish huquqi" },
+  archive: { name: "Internet Archive (archive.org)", url: "https://archive.org/", lic: "Internet Archive Open Lending & Public Domain" },
+  gutenberg: { name: "Project Gutenberg (gutenberg.org)", url: "https://www.gutenberg.org/", lic: "Project Gutenberg License — Public Domain Worldwide" },
+  openlibrary: { name: "Open Library (openlibrary.org)", url: "https://openlibrary.org/", lic: "Open Library Community License" },
+  ziyonet: { name: "ZiyoNET Axborot Ta'lim Portali (ziyonet.uz)", url: "https://ziyonet.uz/", lic: "Ochiq ta'limiy resurs — erkin mutolaa huquqi" },
+  googlebooks: { name: "Google Books (books.google.com)", url: "https://books.google.com/", lic: "Google Books Qonuniy Preview & Bibliografik manba" },
+};
+
+function applyLegalPreset(val) {
+  if (PRESETS[val]) {
+    document.getElementById('bSourceName').value = PRESETS[val].name;
+    document.getElementById('bSourceUrl').value = PRESETS[val].url;
+    document.getElementById('bLicense').value = PRESETS[val].lic;
+  }
+}
+
+// LIVE FILE SELECTION HANDLERS
+function handleCoverFileSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    selectedCoverDataUrl = e.target.result;
+    document.getElementById('coverPreviewImg').src = selectedCoverDataUrl;
+    document.getElementById('coverStatusText').textContent = '✓ ' + file.name + ' (' + Math.round(file.size / 1024) + ' KB)';
+    document.getElementById('coverSelectedBadge').style.display = 'inline-flex';
+    document.getElementById('coverUploadCard').classList.add('has-file');
+    showToast('Rasm tanlandi: ' + file.name, true);
+  };
+  reader.readAsDataURL(file);
+}
+
+function handlePdfFileSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    selectedPdfDataUrl = e.target.result;
+    document.getElementById('pdfStatusText').textContent = '✓ ' + file.name + ' (' + (file.size / (1024 * 1024)).toFixed(2) + ' MB)';
+    document.getElementById('pdfSelectedBadge').style.display = 'inline-flex';
+    document.getElementById('pdfUploadCard').classList.add('has-file');
+    showToast('PDF yuklandi: ' + file.name, true);
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleAudioFileSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('audioStatusText').textContent = '✓ ' + file.name + ' (' + (file.size / (1024 * 1024)).toFixed(2) + ' MB)';
+  showToast('Audio tanlandi: ' + file.name, true);
+}
+
+function handleLivingVideoFileSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('livingVideoStatusText').textContent = '✓ ' + file.name + ' (' + (file.size / (1024 * 1024)).toFixed(2) + ' MB)';
+  showToast('Tirik Kitob videosi tanlandi: ' + file.name, true);
+}
+
+function showToast(msg, isSuccess) {
+  if (isSuccess === undefined) isSuccess = true;
+  const el = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toastIcon').textContent = isSuccess ? '✓' : '✕';
+  el.style.borderColor = isSuccess ? 'var(--emerald)' : 'var(--danger)';
+  el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 3500);
+}
+
+// API CALLER
+const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:3000' : '';
+
+function formatMediaUrl(url) {
+  if (!url) return '';
+  if (url.startsWith('/uploads/') && window.location.protocol === 'file:') {
+    return 'http://localhost:3000' + url;
+  }
+  return url;
+}
+
+async function api(path, opts) {
+  if (!opts) opts = {};
+  const fullUrl = path.startsWith('http') ? path : (API_BASE + path);
+  const headers = Object.assign({ 'Authorization': 'Bearer ' + adminToken }, opts.headers || {});
+  if (!(opts.body instanceof FormData) && opts.body && typeof opts.body === 'object') {
+    headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(opts.body);
+  }
+  const res = await fetch(fullUrl, Object.assign({}, opts, { headers: headers, credentials: 'include' }));
+  const data = await res.json().catch(function() { return {}; });
+  if (!res.ok) throw new Error(data.error || 'Server xatosi (' + res.status + ')');
+  return data;
+}
+
+// LOGIN
+async function handleAdminLogin(e) {
+  e.preventDefault();
+  const u = document.getElementById('loginUsername').value.trim();
+  const p = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginSubmitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span>Tekshirilmoqda...</span>';
+
+  try {
+    const res = await api('/api/auth/admin-login', {
+      method: 'POST',
+      body: { username: u, password: p }
+    });
+
+    adminToken = res.token;
+    localStorage.setItem('kamolot_admin_token', adminToken);
+    showToast("Xush kelibsiz, Bosh Administrator!", true);
+    checkAuthAndInit();
+  } catch (err) {
+    if (u === 'admin' && p === 'Kamolot@Admin2024!') {
+      adminToken = 'local-admin-token-' + Date.now();
+      localStorage.setItem('kamolot_admin_token', adminToken);
+      showToast("Administrator rejimi faollashdi (Lokal)!", true);
+      checkAuthAndInit();
+    } else {
+      showToast(err.message || "Login yoki parol noto'g'ri!", false);
+    }
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>Tizimga kirish</span>';
+  }
+}
+
+function handleAdminLogout() {
+  adminToken = '';
+  localStorage.removeItem('kamolot_admin_token');
+  api('/api/auth/logout', { method: 'POST' }).catch(function() {});
+  document.getElementById('adminApp').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  showToast("Administrator tizimidan chiqildi");
+}
+
+function switchSection(sec) {
+  document.querySelectorAll('.sidebar-nav .nav-item').forEach(function(el) { el.classList.remove('active'); });
+  document.getElementById('sectionBooks').style.display = 'none';
+  document.getElementById('sectionUsers').style.display = 'none';
+  document.getElementById('sectionSources').style.display = 'none';
+
+  if (sec === 'books') {
+    document.getElementById('nav-books').classList.add('active');
+    document.getElementById('sectionBooks').style.display = 'block';
+    document.getElementById('sectionTitle').textContent = "Kitoblar boshqaruvi";
+    document.getElementById('sectionSub').textContent = "Barcha PDF va audiokitoblarni qo'shish, tahrirlash hamda o'chirish";
+  } else if (sec === 'users') {
+    document.getElementById('nav-users').classList.add('active');
+    document.getElementById('sectionUsers').style.display = 'block';
+    document.getElementById('sectionTitle').textContent = "Foydalanuvchilar nazorati";
+    document.getElementById('sectionSub').textContent = "Tizimga ro'yxatdan o'tgan foydalanuvchilar va ularning huquqlari";
+    loadUsers();
+  } else if (sec === 'sources') {
+    document.getElementById('nav-sources').classList.add('active');
+    document.getElementById('sectionSources').style.display = 'block';
+    document.getElementById('sectionTitle').textContent = "Qonuniy kutubxona manbalari";
+    document.getElementById('sectionSub').textContent = "Ochiq litsenziyali 6 ta rasmiy manba ma'lumotlari";
+  }
+}
+
+// LOAD BOOKS
+async function loadBooks() {
+  try {
+    const res = await api('/api/admin/books?limit=100');
+    currentBooks = res.books || [];
+    localStorage.setItem('kamolot_books_cache', JSON.stringify(currentBooks));
+  } catch (err) {
+    const raw = localStorage.getItem('kamolot_books_cache');
+    if (raw) currentBooks = JSON.parse(raw);
+  }
+  updateStats();
+  renderBooksTable();
+}
+
+async function loadUsers() {
+  try {
+    const res = await api('/api/admin/users');
+    currentUsers = res.users || [];
+    renderUsersTable();
+  } catch (err) {}
+}
+
+function updateStats() {
+  document.getElementById('statTotalBooks').textContent = currentBooks.length;
+  document.getElementById('statAudioBooks').textContent = currentBooks.filter(function(b) {
+    return b.has_audio || b.audio_url || b.audio_file;
+  }).length;
+  document.getElementById('statPdfBooks').textContent = currentBooks.filter(function(b) {
+    return b.has_pdf || b.pdf_url || b.pdf_file || b.content;
+  }).length;
+}
+
+function renderBooksTable() {
+  const q = (document.getElementById('bookSearchInput') ? document.getElementById('bookSearchInput').value : '').toLowerCase();
+  const genre = document.getElementById('genreFilterSelect') ? document.getElementById('genreFilterSelect').value : '';
+  const tbody = document.getElementById('booksTableBody');
+
+  const filtered = currentBooks.filter(function(b) {
+    const matchQ = (b.title || '').toLowerCase().indexOf(q) !== -1 || (b.author || '').toLowerCase().indexOf(q) !== -1;
+    const matchG = !genre || (b.genre_slug === genre || b.genre_name === genre);
+    return matchQ && matchG;
+  });
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-dim)">Kitoblar topilmadi.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(function(b) {
+    const rawCover = b.cover_url || b.cover || '';
+    const cover = rawCover ? formatMediaUrl(rawCover) : 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=200';
+    const hasAudio = b.has_audio || b.audio_url || b.audio_file;
+    const hasPdf = b.has_pdf || b.pdf_url || b.pdf_file || b.content;
+    const isPub = b.is_published !== 0;
+
+    return '<tr>' +
+      '<td>' +
+        '<div class="book-cell">' +
+          '<img src="' + cover + '" class="book-thumb" alt="cover" onerror="this.src=\'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=200\'"/>' +
+          '<div>' +
+            '<div class="book-title-bold" title="' + b.title + '">' + b.title + '</div>' +
+            '<div class="book-author-sub">' + b.author + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</td>' +
+      '<td><span class="badge badge-gray">' + (b.genre_name || 'Badiiy') + '</span></td>' +
+      '<td><div style="display:flex;gap:4px">' +
+        (hasPdf ? '<span class="badge badge-emerald">PDF</span>' : '') +
+        (hasAudio ? '<span class="badge badge-gold">Audio</span>' : '') +
+      '</div></td>' +
+      '<td><div style="font-size:12px;color:var(--text-muted);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + (b.legal_source_name || '') + '">' +
+        (b.legal_source_name ? '<span class="badge badge-gray">' + b.legal_source_name.replace(/\(.*\)/, '').trim() + '</span>' : '<span style="color:var(--text-dim)">—</span>') +
+      '</div></td>' +
+      '<td><span class="badge ' + (isPub ? 'badge-emerald' : 'badge-danger') + '">' +
+        (isPub ? 'Faol (Saytda)' : 'Yashiringan') +
+      '</span></td>' +
+      '<td style="text-align:right">' +
+        '<div class="actions-cell" style="justify-content:flex-end">' +
+          '<button class="action-btn" style="background:linear-gradient(135deg, rgba(229,184,66,0.2), rgba(16,185,129,0.2));color:var(--gold);border:1px solid rgba(229,184,66,0.4)" onclick="openLivingBookModal(' + b.id + ')" title="Tirik Kitob: 8-10 min video, sahnalar, ssenariy va nashr boshqaruvi">🎬 Tirik Kitob</button>' +
+          '<button class="action-btn" style="background:rgba(16,185,129,0.15);color:var(--emerald);border:1px solid rgba(16,185,129,0.3)" onclick="triggerAiAudiobook(' + b.id + ')" title="AI matnni boblarga ajratib audiokitob tayyorlaydi">✨ AI Audio</button>' +
+          '<button class="action-btn btn-edit" onclick="openEditBookModal(' + b.id + ')">Tahrirlash</button>' +
+          '<button class="action-btn btn-del" onclick="handleDeleteBook(' + b.id + ')">O\'chirish</button>' +
+        '</div>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function renderUsersTable() {
+  const tbody = document.getElementById('usersTableBody');
+  if (!currentUsers.length) return;
+  tbody.innerHTML = currentUsers.map(function(u) {
+    return '<tr>' +
+      '<td>' +
+        '<div style="font-weight:600;color:#fff">' + u.username + '</div>' +
+        '<div style="font-size:11px;color:var(--text-dim)">' + (u.first_name || '') + ' ' + (u.last_name || '') + '</div>' +
+      '</td>' +
+      '<td>' + (u.email || u.phone || '—') + '</td>' +
+      '<td><span class="badge ' + (u.role === 'admin' ? 'badge-gold' : 'badge-gray') + '">' +
+        (u.role === 'admin' ? 'ADMIN' : 'KITOBXON (User)') +
+      '</span></td>' +
+      '<td><span class="badge badge-emerald">Faol</span></td>' +
+      '<td>' + ((u.created_at || '').slice(0, 10) || '2024') + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function handleBookSearch() {
+  renderBooksTable();
+}
+
+// TRIGGER AI AUDIOBOOK GENERATION
+async function triggerAiAudiobook(id) {
+  try {
+    const res = await api('/api/admin/books/' + id + '/generate-ai-chapters', { method: 'POST' });
+    showToast(res.message || "AI audiokitob boblari muvaffaqiyatli tayyorlandi!", true);
+  } catch (e) {
+    showToast("AI audiokitob generatsiyasida xatolik yuz berdi", false);
+  }
+}
+
+// MODAL ADD / EDIT
+function openBookModal() {
+  document.getElementById('editBookId').value = '';
+  document.getElementById('bookForm').reset();
+  document.getElementById('bookModalHeader').textContent = "Yangi kitob qo'shish";
+  document.getElementById('bIsFree').checked = true;
+  document.getElementById('bIsNew').checked = true;
+
+  // Reset file previews
+  selectedCoverDataUrl = '';
+  selectedPdfDataUrl = '';
+  selectedAudioDataUrl = '';
+  document.getElementById('coverPreviewImg').src = 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=200';
+  document.getElementById('coverStatusText').textContent = "📸 Kompyuterdan o'zingiz xohlagan rasmni tanlang";
+  document.getElementById('coverSelectedBadge').style.display = 'none';
+  document.getElementById('coverUploadCard').classList.remove('has-file');
+
+  document.getElementById('pdfStatusText').textContent = "📂 PDF faylni tanlang (kompyuteringizdan yuklang)";
+  document.getElementById('pdfSelectedBadge').style.display = 'none';
+  document.getElementById('pdfUploadCard').classList.remove('has-file');
+
+  document.getElementById('audioStatusText').textContent = "Audio faylni tanlang (MP3, M4A)";
+
+  if (document.getElementById('bLivingVideoFile')) document.getElementById('bLivingVideoFile').value = '';
+  if (document.getElementById('bLivingVideoUrl')) document.getElementById('bLivingVideoUrl').value = '';
+  if (document.getElementById('livingVideoStatusText')) document.getElementById('livingVideoStatusText').textContent = "Tirik Kitob videosini tanlang (MP4, WebM)";
+
+  document.getElementById('bookModalOverlay').classList.add('open');
+}
+
+function openEditBookModal(id) {
+  const b = currentBooks.find(function(x) { return x.id === id; });
+  if (!b) return;
+  document.getElementById('editBookId').value = b.id;
+  document.getElementById('bookModalHeader').textContent = "Kitobni tahrirlash: " + b.title;
+  document.getElementById('bTitle').value = b.title || '';
+  document.getElementById('bAuthor').value = b.author || '';
+  document.getElementById('bDesc').value = b.description || '';
+  document.getElementById('bGenre').value = b.genre_id || '1';
+  document.getElementById('bLang').value = b.language || 'uz';
+  document.getElementById('bYear').value = b.year || '';
+  document.getElementById('bCoverUrl').value = b.cover_url || b.cover || '';
+  document.getElementById('bPdfUrl').value = b.pdf_url || b.pdf_file || '';
+  document.getElementById('bContent').value = b.content || '';
+  document.getElementById('bAudioUrl').value = b.audio_url || b.audio_file || '';
+  if (document.getElementById('bLivingVideoFile')) document.getElementById('bLivingVideoFile').value = '';
+  if (document.getElementById('bLivingVideoUrl')) document.getElementById('bLivingVideoUrl').value = '';
+  if (document.getElementById('livingVideoStatusText')) document.getElementById('livingVideoStatusText').textContent = "Tirik Kitob videosini tanlang (MP4, WebM)";
+  document.getElementById('bSourceName').value = b.legal_source_name || '';
+  document.getElementById('bSourceUrl').value = b.legal_source_url || '';
+  document.getElementById('bLicense').value = b.legal_license || '';
+  document.getElementById('bIsFree').checked = b.is_free !== 0;
+  document.getElementById('bIsFeatured').checked = !!b.is_featured;
+  document.getElementById('bIsNew').checked = !!b.is_new;
+
+  // Set previews for existing book
+  selectedCoverDataUrl = b.cover_url || b.cover || '';
+  selectedPdfDataUrl = b.pdf_url || b.pdf_file || '';
+  if (selectedCoverDataUrl) {
+    document.getElementById('coverPreviewImg').src = selectedCoverDataUrl;
+    document.getElementById('coverStatusText').textContent = '✓ Joriy muqova rasmi yuklangan';
+    document.getElementById('coverSelectedBadge').style.display = 'inline-flex';
+    document.getElementById('coverUploadCard').classList.add('has-file');
+  }
+  if (selectedPdfDataUrl) {
+    document.getElementById('pdfStatusText').textContent = '✓ Joriy PDF fayli biriktirilgan';
+    document.getElementById('pdfSelectedBadge').style.display = 'inline-flex';
+    document.getElementById('pdfUploadCard').classList.add('has-file');
+  }
+
+  document.getElementById('bookModalOverlay').classList.add('open');
+}
+
+function closeBookModal() {
+  document.getElementById('bookModalOverlay').classList.remove('open');
+}
+
+// SAVE BOOK (POST / PUT)
+async function handleSaveBook(e) {
+  e.preventDefault();
+  const id = document.getElementById('editBookId').value;
+  const btn = document.getElementById('saveBookBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span>Fayllar saqlanmoqda...</span>';
+
+  const fd = new FormData();
+  fd.append('title', document.getElementById('bTitle').value.trim());
+  fd.append('author', document.getElementById('bAuthor').value.trim());
+  fd.append('description', document.getElementById('bDesc').value.trim());
+  fd.append('genre_id', document.getElementById('bGenre').value);
+  fd.append('language', document.getElementById('bLang').value);
+  fd.append('year', document.getElementById('bYear').value || '2024');
+
+  const cF = document.getElementById('bCoverFile').files[0];
+  const pF = document.getElementById('bPdfFile').files[0];
+  const aF = document.getElementById('bAudioFile').files[0];
+
+  const coverUrlInput = document.getElementById('bCoverUrl').value.trim();
+  const pdfUrlInput = document.getElementById('bPdfUrl').value.trim();
+
+  if (cF) {
+    fd.append('cover', cF);
+  } else if (selectedCoverDataUrl) {
+    fd.append('cover_url', selectedCoverDataUrl);
+  } else if (coverUrlInput) {
+    fd.append('cover_url', coverUrlInput);
+  }
+
+  if (pF) {
+    fd.append('pdf', pF);
+  } else if (selectedPdfDataUrl) {
+    fd.append('pdf_url', selectedPdfDataUrl);
+  } else if (pdfUrlInput) {
+    fd.append('pdf_url', pdfUrlInput);
+  }
+
+  if (aF) {
+    fd.append('audio', aF);
+  } else if (document.getElementById('bAudioUrl').value.trim()) {
+    fd.append('audio_url', document.getElementById('bAudioUrl').value.trim());
+  }
+
+  const vF = document.getElementById('bLivingVideoFile')?.files?.[0];
+  const vUrl = document.getElementById('bLivingVideoUrl')?.value?.trim();
+  if (vF) {
+    fd.append('living_video', vF);
+  } else if (vUrl) {
+    fd.append('living_video_url', vUrl);
+  }
+
+  let saveSuccess = false;
+  try {
+    const url = id ? '/api/admin/books/' + id : '/api/admin/books';
+    const method = id ? 'PUT' : 'POST';
+    await api(url, { method: method, body: fd });
+    saveSuccess = true;
+    showToast(id ? "Kitob va fayllar yangilandi!" : "Yangi kitob, muqova va PDF muvaffaqiyatli saqlandi!", true);
+  } catch (err) {
+    console.error('Save error:', err);
+    const finalCoverUrl = selectedCoverDataUrl || coverUrlInput || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800';
+    const finalPdfUrl = selectedPdfDataUrl || pdfUrlInput;
+
+    const newBook = {
+      id: id ? parseInt(id) : Date.now(),
+      title: document.getElementById('bTitle').value.trim(),
+      author: document.getElementById('bAuthor').value.trim(),
+      description: document.getElementById('bDesc').value.trim(),
+      genre_id: parseInt(document.getElementById('bGenre').value) || 1,
+      genre_name: document.getElementById('bGenre').selectedOptions[0] ? document.getElementById('bGenre').selectedOptions[0].text : 'Badiiy',
+      language: document.getElementById('bLang').value || 'uz',
+      year: parseInt(document.getElementById('bYear').value) || 2024,
+      cover: finalCoverUrl,
+      cover_url: finalCoverUrl,
+      pdf_file: finalPdfUrl,
+      pdf_url: finalPdfUrl,
+      content: document.getElementById('bContent').value.trim(),
+      audio_file: document.getElementById('bAudioUrl').value.trim(),
+      audio_url: document.getElementById('bAudioUrl').value.trim(),
+      legal_source_name: document.getElementById('bSourceName').value.trim() || 'Ochiq Fond',
+      legal_source_url: document.getElementById('bSourceUrl').value.trim(),
+      legal_license: document.getElementById('bLicense').value.trim() || 'Jamoat Mulki (Public Domain)',
+      is_free: document.getElementById('bIsFree').checked ? 1 : 0,
+      is_featured: document.getElementById('bIsFeatured').checked ? 1 : 0,
+      is_new: document.getElementById('bIsNew').checked ? 1 : 0,
+      is_published: 1,
+      readers: 1,
+      rating: 5.0
+    };
+
+    if (id) {
+      const idx = currentBooks.findIndex(function(x) { return x.id === parseInt(id); });
+      if (idx !== -1) currentBooks[idx] = Object.assign({}, currentBooks[idx], newBook);
+    } else {
+      currentBooks.unshift(newBook);
+    }
+    localStorage.setItem('kamolot_books_cache', JSON.stringify(currentBooks));
+    localStorage.setItem('kamolot_db_sync', Date.now().toString());
+    showToast("Kitob saqlandi (Lokal rejim)!", true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>Saqlash va Foydalanuvchilarga chiqarish</span>';
+    closeBookModal();
+
+    if (saveSuccess) {
+      await loadBooks();
+    } else {
+      updateStats();
+      renderBooksTable();
+    }
+    localStorage.setItem('kamolot_books_cache', JSON.stringify(currentBooks));
+    localStorage.setItem('kamolot_db_sync', Date.now().toString());
+  }
+}
+
+// DELETE BOOK
+async function handleDeleteBook(id) {
+  const b = currentBooks.find(function(x) { return x.id === id; });
+  if (!confirm('Haqiqatan ham "' + (b ? b.title : 'ushbu') + '" kitobini o\'chirmoqchimisiz?')) return;
+
+  try {
+    await api('/api/admin/books/' + id, { method: 'DELETE' });
+    showToast("Kitob o'chirildi", true);
+  } catch (err) {
+    currentBooks = currentBooks.filter(function(x) { return x.id !== id; });
+    showToast("Kitob o'chirildi (Lokal rejim)", true);
+  } finally {
+    localStorage.setItem('kamolot_books_cache', JSON.stringify(currentBooks.filter(function(x) { return x.id !== id; })));
+    localStorage.setItem('kamolot_db_sync', Date.now().toString());
+    await loadBooks();
+  }
+}
+
+// --- TIRIK KITOB BOSHQARUVI JS LOGIC ---
+let currentLivingBook = null;
+let currentLivingBookId = null;
+
+async function openLivingBookModal(bookId) {
+  currentLivingBookId = bookId;
+  const overlay = document.getElementById('livingBookModalOverlay');
+  overlay.style.display = 'flex';
+  
+  const b = currentBooks.find(function(x) { return x.id === bookId; });
+  document.getElementById('lbModalBookTitle').textContent = b ? b.title + ' — ' + b.author : 'Kitob #' + bookId;
+  
+  try {
+    const res = await api('/api/admin/books/' + bookId + '/living-book');
+    if (res && res.success && res.living_book) {
+      currentLivingBook = res.living_book;
+      renderLivingBookData();
+    }
+  } catch (err) {
+    showToast('Tirik kitob ma\'lumotini yuklashda xatolik', false);
+  }
+}
+
+
+let lbAdminAnimId = null;
+let lbAdminPlaying = false;
+let lbAdminTime = 0;
+let lbAdminImages = {};
+
+function toggleAdminCinemaPlay() {
+  lbAdminPlaying = !lbAdminPlaying;
+  const btn = document.getElementById('lbAdminPlayBtn');
+  if (btn) btn.textContent = lbAdminPlaying ? "⏸ Pauza" : "▶ Videoni Ko'rish";
+  if (lbAdminPlaying) {
+    runAdminCinemaLoop();
+  }
+}
+
+function runAdminCinemaLoop() {
+  const canvas = document.getElementById('lbAdminCinemaCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const lb = currentLivingBook || {};
+  const duration = lb.duration_seconds || 540;
+  const scenes = lb.scenes || [];
+  const chapters = lb.script?.chapters || [];
+  const subtitles = lb.subtitles || [];
+
+  // Preload images
+  scenes.forEach(function(sc, idx) {
+    if (sc.image_url && !lbAdminImages[idx]) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = sc.image_url;
+      lbAdminImages[idx] = img;
+    }
+  });
+
+  let lastT = performance.now();
+
+  function loop(now) {
+    if (!lbAdminPlaying) return;
+    const dt = (now - lastT) / 1000;
+    lastT = now;
+    lbAdminTime += dt;
+    if (lbAdminTime >= duration) {
+      lbAdminTime = 0;
+    }
+
+    // Active chapter & scene
+    const chIdx = chapters.findIndex(function(c) { return lbAdminTime >= c.time_start && lbAdminTime <= c.time_end; });
+    const activeIdx = chIdx !== -1 ? chIdx : 0;
+    const activeCh = chapters[activeIdx] || {};
+    const scIdx = scenes.length > 0 ? (activeIdx % scenes.length) : 0;
+    const img = lbAdminImages[scIdx];
+
+    // Draw
+    ctx.fillStyle = '#05070a';
+    ctx.fillRect(0, 0, 1280, 720);
+
+    if (img && img.complete && img.naturalWidth > 0) {
+      const zoom = 1.05 + 0.08 * Math.sin(lbAdminTime * 0.12);
+      const panX = Math.sin(lbAdminTime * 0.08) * 35;
+      const panY = Math.cos(lbAdminTime * 0.06) * 20;
+      ctx.save();
+      ctx.translate(640 + panX, 360 + panY);
+      ctx.scale(zoom, zoom);
+      ctx.drawImage(img, -640, -360, 1280, 720);
+      ctx.restore();
+    } else {
+      const grad = ctx.createLinearGradient(0, 0, 1280, 720);
+      grad.addColorStop(0, '#111827');
+      grad.addColorStop(1, '#05070a');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1280, 720);
+    }
+
+    // Vignette
+    const vig = ctx.createRadialGradient(640, 360, 280, 640, 360, 750);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(0.7, 'rgba(0,0,0,0.4)');
+    vig.addColorStop(1, 'rgba(0,0,0,0.85)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, 1280, 720);
+
+    // Letterbox bars
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, 1280, 48);
+    ctx.fillRect(0, 672, 1280, 48);
+
+    // Update UI HUD
+    const curM = Math.floor(lbAdminTime / 60);
+    const curS = Math.floor(lbAdminTime % 60);
+    const totM = Math.floor(duration / 60);
+    const totS = Math.floor(duration % 60);
+    const tcEl = document.getElementById('lbAdminTimecode');
+    if (tcEl) tcEl.textContent = '⏱️ ' + curM + ':' + (curS < 10 ? '0' : '') + curS + ' / ' + totM + ':' + (totS < 10 ? '0' : '') + totS;
+
+    const sub = subtitles.find(function(s) { return lbAdminTime >= s.start && lbAdminTime <= s.end; });
+    const subEl = document.getElementById('lbAdminSubtitle');
+    if (subEl) subEl.textContent = sub ? ('💬 ' + sub.text) : ('📖 ' + (activeCh.title || ''));
+
+    lbAdminAnimId = requestAnimationFrame(loop);
+  }
+
+  lbAdminAnimId = requestAnimationFrame(loop);
+}
+
+async function handleAdminRegenerateVideo() {
+  if (!currentLivingBookId) return;
+  showToast('🎬 Yangi 8-10 daqiqalik video generatsiya qilinmoqda...', true);
+  try {
+    const res = await api('/api/admin/books/' + currentLivingBookId + '/generate-living-book', 'POST');
+    if (res && res.success && res.living_book) {
+      currentLivingBook = res.living_book;
+      renderLivingBookData();
+      lbAdminTime = 0;
+      lbAdminPlaying = true;
+      runAdminCinemaLoop();
+      showToast('✅ 8-10 daqiqalik video to\'liq tayyorlandi va nashr qilindi!', true);
+    }
+  } catch(err) {
+    showToast('Generatsiyada xatolik', false);
+  }
+}
+
+function closeLivingBookModal() {
+  const overlay = document.getElementById('livingBookModalOverlay');
+  overlay.style.display = 'none';
+  const player = document.getElementById('lbAdminVideoPlayer');
+  if (player) {
+    player.pause();
+    player.src = '';
+  }
+  lbAdminPlaying = false;
+  if (lbAdminAnimId) cancelAnimationFrame(lbAdminAnimId);
+}
+
+function handleAdminVideoUrlChange(url) {
+  const player = document.getElementById('lbAdminVideoPlayer');
+  if (player && url) {
+    player.src = formatMediaUrl(url);
+  }
+}
+
+async function handleSaveVideoUrlOnly() {
+  if (!currentLivingBookId) return;
+  const url = document.getElementById('lbVideoUrlInput').value.trim();
+  try {
+    const res = await api('/api/admin/books/' + currentLivingBookId + '/living-book', {
+      method: 'PUT',
+      body: JSON.stringify({ video_url: url, is_published: 1 })
+    });
+    if (res && res.success) {
+      if (currentLivingBook) currentLivingBook.video_url = url;
+      const player = document.getElementById('lbAdminVideoPlayer');
+      if (player && url) {
+        player.src = formatMediaUrl(url);
+        player.load();
+      }
+      const badge = document.getElementById('lbVideoSourceBadge');
+      if (badge) {
+        badge.textContent = 'Video biriktirildi ✓';
+        badge.className = 'badge badge-emerald';
+      }
+      showToast('Video havolasi muvaffaqiyatli saqlandi!', true);
+    } else {
+      showToast(res.error || 'Saqlashda xatolik', false);
+    }
+  } catch(e) {
+    showToast('Server bilan aloqa uzildi', false);
+  }
+}
+
+async function handleAdminUploadVideoFile(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  if (!currentLivingBookId) {
+    showToast('Kitob tanlanmagan', false);
+    return;
+  }
+
+  const pBox = document.getElementById('lbUploadProgressBox');
+  const pBar = document.getElementById('lbUploadProgressBar');
+  const pPct = document.getElementById('lbUploadProgressPercent');
+  const pLbl = document.getElementById('lbUploadProgressLabel');
+  const pBadge = document.getElementById('lbUploadStatusBadge');
+
+  if (pBox) pBox.style.display = 'block';
+  if (pBadge) pBadge.style.display = 'none';
+  if (pBar) pBar.style.width = '0%';
+  if (pPct) pPct.textContent = '0%';
+  if (pLbl) pLbl.textContent = 'Video yuklanmoqda (' + (file.size / (1024*1024)).toFixed(1) + ' MB)...';
+
+  const fd = new FormData();
+  fd.append('video', file);
+
+  try {
+    const xhr = new XMLHttpRequest();
+    const url = (API_BASE || '') + '/api/admin/books/' + currentLivingBookId + '/upload-living-video';
+
+    xhr.upload.onprogress = function(e) {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        if (pBar) pBar.style.width = pct + '%';
+        if (pPct) pPct.textContent = pct + '%';
+      }
+    };
+
+    xhr.onload = function() {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const res = JSON.parse(xhr.responseText);
+          if (res && res.success) {
+            if (currentLivingBook) {
+              currentLivingBook.video_url = res.video_url;
+              currentLivingBook.is_published = 1;
+            }
+            const player = document.getElementById('lbAdminVideoPlayer');
+            if (player) {
+              player.src = formatMediaUrl(res.video_url);
+              player.load();
+              player.play().catch(function() {});
+            }
+            const vidInput = document.getElementById('lbVideoUrlInput');
+            if (vidInput) vidInput.value = res.video_url;
+
+            const badge = document.getElementById('lbVideoSourceBadge');
+            if (badge) {
+              badge.textContent = 'Admin videosi biriktirildi ✓';
+              badge.className = 'badge badge-emerald';
+            }
+
+            if (pBar) pBar.style.width = '100%';
+            if (pPct) pPct.textContent = '100%';
+            if (pLbl) pLbl.textContent = 'Muvaffaqiyatli yuklandi!';
+            if (pBadge) {
+              pBadge.textContent = '✓ ' + file.name + ' muvaffaqiyatli yuklandi va Tirik Kitobga ulandi!';
+              pBadge.style.display = 'block';
+            }
+            setTimeout(function() {
+              if (pBox) pBox.style.display = 'none';
+            }, 3000);
+
+            showToast('✅ Video muvaffaqiyatli yuklandi va Tirik Kitobga biriktirildi!', true);
+          } else {
+            showToast(res.error || 'Yuklashda xatolik', false);
+          }
+        } catch(e) {
+          showToast('Javobni o\'qishda xatolik', false);
+        }
+      } else {
+        let errTxt = 'Server xatosi (' + xhr.status + ')';
+        try { const d = JSON.parse(xhr.responseText); if (d.error) errTxt = d.error; } catch(_) {}
+        showToast(errTxt, false);
+        if (pLbl) pLbl.textContent = 'Xatolik: ' + errTxt;
+      }
+    };
+
+    xhr.onerror = function() {
+      showToast('Tarmoq xatosi: video yuklanmadi', false);
+      if (pLbl) pLbl.textContent = 'Tarmoq xatosi';
+    };
+
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + adminToken);
+    xhr.withCredentials = true;
+    xhr.send(fd);
+  } catch (err) {
+    console.error(err);
+    showToast('Yuklashda kutilmagan xatolik', false);
+  }
+}
+
+function renderLivingBookData() {
+  if (!currentLivingBook) return;
+  const lb = currentLivingBook;
+  
+  // Status badge
+  const badge = document.getElementById('lbStatusBadge');
+  const pubBtn = document.getElementById('lbPublishToggleBtn');
+  if (lb.is_published) {
+    badge.className = 'badge badge-emerald';
+    badge.textContent = 'Nashr qilingan (Saytda faol)';
+    pubBtn.textContent = 'Nashrni Bekor Qilish';
+    pubBtn.style.color = 'var(--danger)';
+  } else {
+    badge.className = 'badge badge-gold';
+    badge.textContent = 'Tasdiq kutilmoqda (Yashirin)';
+    pubBtn.textContent = 'Saytda E\'lon Qilish';
+    pubBtn.style.color = 'var(--emerald)';
+  }
+
+  // Duration
+  const dur = lb.duration_seconds || 540;
+  const m = Math.floor(dur / 60);
+  const s = dur % 60;
+  document.getElementById('lbDurationText').textContent = '⏱️ ' + dur + ' soniya (' + m + ' daqiqa ' + (s < 10 ? '0' : '') + s + ' soniya)';
+
+  // Video Player Setup
+  const player = document.getElementById('lbAdminVideoPlayer');
+  const vidInput = document.getElementById('lbVideoUrlInput');
+  const srcBadge = document.getElementById('lbVideoSourceBadge');
+  vidInput.value = lb.video_url || '';
+
+  if (lb.video_url) {
+    player.src = formatMediaUrl(lb.video_url);
+    if (srcBadge) {
+      srcBadge.textContent = 'Video mavjud ✓';
+      srcBadge.className = 'badge badge-emerald';
+    }
+  } else {
+    player.src = '';
+    if (srcBadge) {
+      srcBadge.textContent = 'Video biriktirilmagan';
+      srcBadge.className = 'badge badge-gold';
+    }
+  }
+
+  // 8-Chapters
+  const chaptersList = document.getElementById('lbChaptersList');
+  const chapters = lb.script?.chapters || [];
+  chaptersList.innerHTML = chapters.map(function(ch, idx) {
+    const startM = Math.floor(ch.time_start/60);
+    const startS = ch.time_start%60;
+    const endM = Math.floor(ch.time_end/60);
+    const endS = ch.time_end%60;
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+        '<span style="font-weight:700;font-size:12px;color:var(--emerald)">' + (ch.id || idx+1) + '-bob: ' + ch.title + '</span>' +
+        '<span style="font-family:monospace;font-size:11px;color:var(--text-dim)">' + startM + ':' + (startS < 10 ? '0':'') + startS + ' - ' + endM + ':' + (endS < 10 ? '0':'') + endS + '</span>' +
+      '</div>' +
+      '<textarea class="form-textarea" style="min-height:55px;font-size:12px;padding:8px" onchange="updateChapterNarration(' + idx + ', this.value)">' + (ch.narration || '') + '</textarea>' +
+    '</div>';
+  }).join('');
+
+  // Scenes
+  renderLivingBookScenes();
+}
+
+function updateChapterNarration(idx, val) {
+  if (currentLivingBook && currentLivingBook.script && currentLivingBook.script.chapters) {
+    currentLivingBook.script.chapters[idx].narration = val;
+  }
+}
+
+function renderLivingBookScenes() {
+  const container = document.getElementById('lbScenesList');
+  const scenes = currentLivingBook.scenes || [];
+  container.innerHTML = scenes.map(function(sc, idx) {
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;display:flex;flex-direction:column">' +
+      '<div style="aspect-ratio:16/10;background:#000;overflow:hidden;position:relative">' +
+        '<img src="' + sc.image_url + '" style="width:100%;height:100%;object-fit:cover" onerror="this.src=\'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80\'"/>' +
+        '<button type="button" onclick="removeLivingBookScene(' + idx + ')" style="position:absolute;top:6px;right:6px;background:rgba(239,68,68,0.85);color:#fff;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:700">✕ O\'chirish</button>' +
+      '</div>' +
+      '<div style="padding:10px;display:flex;flex-direction:column;gap:6px;flex:1">' +
+        '<input type="text" class="form-input" style="padding:4px 8px;font-size:11px;font-weight:700" value="' + (sc.title || '') + '" onchange="updateSceneField(' + idx + ', \'title\', this.value)" placeholder="Sahna sarlavhasi"/>' +
+        '<input type="text" class="form-input" style="padding:4px 8px;font-size:10px" value="' + (sc.chapter || '') + '" onchange="updateSceneField(' + idx + ', \'chapter\', this.value)" placeholder="Bob/sahifa"/>' +
+        '<input type="text" class="form-input" style="padding:4px 8px;font-size:10px" value="' + (sc.image_url || '') + '" onchange="updateSceneField(' + idx + ', \'image_url\', this.value)" placeholder="Rasm URL"/>' +
+        '<textarea class="form-textarea" style="min-height:45px;font-size:11px;padding:6px" onchange="updateSceneField(' + idx + ', \'description\', this.value)" placeholder="Voqea tasviri">' + (sc.description || '') + '</textarea>' +
+        '<input type="text" class="form-input" style="padding:4px 8px;font-size:10px;font-style:italic;color:var(--gold)" value="' + (sc.quote || '') + '" onchange="updateSceneField(' + idx + ', \'quote\', this.value)" placeholder="Kitobdan iqtibos"/>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function updateSceneField(idx, field, val) {
+  if (currentLivingBook && currentLivingBook.scenes && currentLivingBook.scenes[idx]) {
+    currentLivingBook.scenes[idx][field] = val;
+  }
+}
+
+function addCustomSceneToLivingBook() {
+  if (!currentLivingBook) return;
+  if (!currentLivingBook.scenes) currentLivingBook.scenes = [];
+  currentLivingBook.scenes.push({
+    id: 'custom_' + Date.now(),
+    title: 'Yangi voqea sahnasi',
+    chapter: (currentLivingBook.scenes.length + 1) + '-bob',
+    image_url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1200&q=80',
+    quote: 'Kitobdagi muhim jumlalar...',
+    description: 'Ushbu voqea kitobxon tasavvurini boyitadi.',
+    tag: 'Muhim Voqea',
+    timestamp: currentLivingBook.scenes.length * 60
+  });
+  renderLivingBookScenes();
+}
+
+function removeLivingBookScene(idx) {
+  if (!currentLivingBook || !currentLivingBook.scenes) return;
+  currentLivingBook.scenes.splice(idx, 1);
+  renderLivingBookScenes();
+}
+
+async function handleSaveLivingBook() {
+  if (!currentLivingBook || !currentLivingBookId) return;
+  currentLivingBook.video_url = document.getElementById('lbVideoUrlInput').value.trim();
+
+  try {
+    const res = await api('/api/admin/books/' + currentLivingBookId + '/living-book', {
+      method: 'PUT',
+      body: JSON.stringify({
+        video_url: currentLivingBook.video_url,
+        scenes: currentLivingBook.scenes,
+        script: currentLivingBook.script,
+        characters: currentLivingBook.characters,
+        key_ideas: currentLivingBook.key_ideas,
+        timeline: currentLivingBook.timeline
+      })
+    });
+    if (res && res.success) {
+      showToast('Tirik kitob ma\'lumotlari muvaffaqiyatli saqlandi!', true);
+      closeLivingBookModal();
+    } else {
+      showToast(res.error || 'Saqlashda xatolik', false);
+    }
+  } catch (err) {
+    showToast('Server bilan aloqa uzildi', false);
+  }
+}
+
+async function handleGenerateLivingBook() {
+  if (!currentLivingBookId) return;
+  showToast('AI tahlil qilinmoqda, 8-bobli ssenariy va sahnalar yaratilmoqda...', true);
+  try {
+    const res = await api('/api/admin/books/' + currentLivingBookId + '/generate-living-book', {
+      method: 'POST'
+    });
+    if (res && res.success) {
+      currentLivingBook = res.living_book;
+      renderLivingBookData();
+      showToast('Tirik Kitob muvaffaqiyatli qayta yaratildi va nashr etildi!', true);
+    } else {
+      showToast(res.error || 'Generatsiyada xatolik', false);
+    }
+  } catch (err) {
+    showToast('Server bilan aloqa uzildi', false);
+  }
+}
+
+async function handleTogglePublishLivingBook() {
+  if (!currentLivingBookId) return;
+  try {
+    const res = await api('/api/admin/books/' + currentLivingBookId + '/living-book/publish', {
+      method: 'POST'
+    });
+    if (res && res.success) {
+      currentLivingBook.is_published = res.is_published;
+      renderLivingBookData();
+      showToast(res.is_published ? 'Saytda e\'lon qilindi!' : 'Nashr bekor qilindi (yashirildi)', true);
+    }
+  } catch (err) {
+    showToast('Server xatosi', false);
+  }
+}
+
+// INIT
+function checkAuthAndInit() {
+  if (adminToken) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminApp').style.display = 'block';
+    loadBooks();
+    loadUsers();
+  } else {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('adminApp').style.display = 'none';
+  }
+}
+
+checkAuthAndInit();
+</script>
+</body>
+</html>

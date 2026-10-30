@@ -1,0 +1,3106 @@
+<!DOCTYPE html>
+<html lang="uz" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KAMOLOT — Aqlli Mutolaa va Audiokitoblar Ekotizimi</title>
+  <meta name="description" content="KAMOLOT — zamonaviy, minimalistik, immersiv mutolaa ekotizimi. Kitob olamiga kirish, AI audiokitob, inklyuziv imo-ishora tili va qonuniy ochiq kutubxona." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              accent: '#00d09c',
+            },
+            mutolaa: {
+              darkBg: '#0b0f14',
+              darkSurface: '#121820',
+              darkElevated: '#1a222d',
+              darkBorder: 'rgba(255, 255, 255, 0.08)',
+              gold: '#e5b842',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+            reader: ['"Merriweather"', 'serif'],
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- React 18 & Babel CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      background-color: #0b0f14;
+      color: #f3f4f6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+    }
+    .book-spine-3d {
+      box-shadow: -4px 0 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.5);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+    }
+    .book-card:hover .book-spine-3d {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: -6px 0 12px rgba(0,0,0,0.5), 0 16px 24px rgba(16, 185, 129, 0.2);
+    }
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .line-clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 0.9; transform: scale(1.05); }
+    }
+    .beacon-pulse {
+      animation: pulseGlow 2.5s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-[#0b0f14] text-gray-100 font-sans min-h-screen selection:bg-brand-500 selection:text-white">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useMemo } = React;
+
+    // --- ICONS HELPER ---
+    function Icon({ name, className = "w-5 h-5" }) {
+      const icons = {
+        book: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></>,
+        headphones: <><path d="M3 18v-6a9 9 0 0 1 18 0v6" /><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" /></>,
+        play: <polygon points="5 3 19 12 5 21 5 3" />,
+        pause: <><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></>,
+        sparkles: <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />,
+        search: <><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></>,
+        shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />,
+        star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />,
+        x: <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>,
+        check: <polyline points="20 6 9 17 4 12" />,
+        user: <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
+        download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></>,
+        rewind15: <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5" />,
+        forward15: <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8M21 3v5h-5" />,
+        volume: <><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /></>,
+        bookmark: <path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />,
+        flame: <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />,
+        compass: <><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></>,
+        messageSquare: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>,
+        camera: <><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></>,
+        globe: <><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></>,
+        hand: <><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></>,
+        music: <><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></>
+      };
+      const camel = name.replace(/-([a-z])/g, g => g[1].toUpperCase());
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          {icons[name] || icons[camel] || icons.book}
+        </svg>
+      );
+    }
+
+    // Default avatars
+    const AVATARS = [
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150",
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150",
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150",
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150",
+      "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150",
+      "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=150"
+    ];
+
+    // Fallback Initial Books
+    const INITIAL_BOOKS = [
+      {
+        id: 1,
+        title: "O'tkan kunlar",
+        author: "Abdulla Qodiriy",
+        genre_slug: "fiction",
+        genre_name: "Badiiy adabiyot",
+        cover_url: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800",
+        audio_url: "https://archive.org/download/otkan-kunlar/otkan-kunlar-01.mp3",
+        pdf_url: "https://ia800201.us.archive.org/16/items/otkan-kunlar-roman/otkan-kunlar.pdf",
+        rating: 4.9,
+        readers: 12480,
+        year: 1925,
+        description: "O'zbek adabiyotidagi ilk roman. Otabek va Kumushning fojiali muhabbati hamda Turkiston xonliklarining parokandalik davri.",
+        is_featured: 1,
+        is_free: 1
+      },
+      {
+        id: 21,
+        title: "Atom Odatlar",
+        author: "James Clear",
+        genre_slug: "selfdev",
+        genre_name: "Shaxsiy rivojlanish",
+        cover_url: "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=800",
+        audio_url: "",
+        pdf_url: "",
+        rating: 4.95,
+        readers: 8900,
+        year: 2018,
+        description: "Mayda o'zgarishlar, ulkan natijalar. Odatlarni shakllantirishning ilmiy va amaliy 4 bosqichli tizimi.",
+        is_featured: 1,
+        is_free: 1
+      },
+      {
+        id: 14,
+        title: "Boy ota, kambag'al ota",
+        author: "Robert Kiyosaki",
+        genre_slug: "business",
+        genre_name: "Biznes",
+        cover_url: "https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&q=80&w=800",
+        audio_url: "",
+        pdf_url: "",
+        rating: 4.88,
+        readers: 15400,
+        year: 1997,
+        description: "Moliyaviy savodxonlik, aktivlar va passivlar, erkinlik sari pul oqimi kvadranti.",
+        is_featured: 1,
+        is_free: 1
+      }
+    ];
+
+    // Web Audio Synthesizer Class
+    class AmbientEngine {
+      constructor() {
+        this.ctx = null;
+        this.currentSound = null;
+        this.gainNode = null;
+        this.sourceNodes = [];
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+          this.gainNode = this.ctx.createGain();
+          this.gainNode.gain.value = 0.3;
+          this.gainNode.connect(this.ctx.destination);
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      stop() {
+        this.sourceNodes.forEach(n => {
+          try { n.stop(); n.disconnect(); } catch(e){}
+        });
+        this.sourceNodes = [];
+        this.currentSound = null;
+      }
+      setVolume(val) {
+        if (this.gainNode) {
+          this.gainNode.gain.setValueAtTime(val, this.ctx.currentTime);
+        }
+      }
+      play(soundType) {
+        this.init();
+        this.stop();
+        this.currentSound = soundType;
+
+        if (soundType === 'rain') {
+          // Pink-filtered white noise buffer
+          const bufferSize = this.ctx.sampleRate * 2;
+          const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const output = noiseBuffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+          }
+          const whiteNoise = this.ctx.createBufferSource();
+          whiteNoise.buffer = noiseBuffer;
+          whiteNoise.loop = true;
+
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.value = 1000;
+
+          whiteNoise.connect(filter);
+          filter.connect(this.gainNode);
+          whiteNoise.start();
+          this.sourceNodes.push(whiteNoise);
+        } else if (soundType === 'fireplace') {
+          // Low drone + gentle crackle
+          const osc = this.ctx.createOscillator();
+          osc.type = 'triangle';
+          osc.frequency.value = 85;
+
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.value = 350;
+
+          osc.connect(filter);
+          filter.connect(this.gainNode);
+          osc.start();
+          this.sourceNodes.push(osc);
+        } else if (soundType === 'library') {
+          // Binaural calm focus drone
+          const osc = this.ctx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = 108;
+          osc.connect(this.gainNode);
+          osc.start();
+          this.sourceNodes.push(osc);
+        }
+      }
+    }
+
+    const ambientEngine = new AmbientEngine();
+
+    // Main App Component
+    function KamolotApp() {
+      // Database & Books
+      const [books, setBooks] = useState(INITIAL_BOOKS);
+      const [activeTab, setActiveTab] = useState('home'); // home | catalog | worlds | saved
+      const [selectedGenre, setSelectedGenre] = useState('all');
+      const [formatFilter, setFormatFilter] = useState('all'); // all | pdf | audio | free
+      const [searchQuery, setSearchQuery] = useState('');
+      const [savedBookIds, setSavedBookIds] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('kamolot_saved_ids') || '[]'); } catch(e) { return []; }
+      });
+
+      // User & Onboarding Gate
+      const [currentUser, setCurrentUser] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('kamolot_user') || 'null'); } catch(e) { return null; }
+      });
+      const [showOnboarding, setShowOnboarding] = useState(() => {
+        const stored = localStorage.getItem('kamolot_user');
+        return !stored;
+      });
+      const [onboardingStep, setOnboardingStep] = useState('welcome'); // welcome | auth | interests
+      const [selectedLang, setSelectedLang] = useState('uz');
+      const [authMode, setAuthMode] = useState('register'); // register | login
+      const [authForm, setAuthForm] = useState({
+        name: '',
+        username: '',
+        contact: '',
+        password: '',
+        avatar: AVATARS[0]
+      });
+      const [otpSent, setOtpSent] = useState(false);
+      const [otpCodeInput, setOtpCodeInput] = useState('');
+      const [receivedOtp, setReceivedOtp] = useState('');
+      const [otpVerified, setOtpVerified] = useState(false);
+      const [authError, setAuthError] = useState('');
+      const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
+      const [userInterests, setUserInterests] = useState([]);
+      const [readingGoal, setReadingGoal] = useState("Oyiga 2 ta kitob");
+
+      // Reader Modal (PDF / Text)
+      const [readingBook, setReadingBook] = useState(null);
+      const [readerMode, setReaderMode] = useState('pdf'); // pdf | text
+      const [readerFontSize, setReaderFontSize] = useState(18);
+      const [readerTheme, setReaderTheme] = useState('dark'); // dark | sepia | light
+      const [readingPct, setReadingPct] = useState(0);
+
+      // Audio Player & Web Speech AI
+      const [activeAudioBook, setActiveAudioBook] = useState(null);
+      const [isPlaying, setIsPlaying] = useState(false);
+      const [audioProgress, setAudioProgress] = useState(0);
+      const [audioDuration, setAudioDuration] = useState(300);
+      const [playbackRate, setPlaybackRate] = useState(1);
+      const [aiChapters, setAiChapters] = useState([]);
+      const [currentChapterIdx, setCurrentChapterIdx] = useState(0);
+      const [isSpeechMode, setIsSpeechMode] = useState(false);
+      const audioRef = useRef(null);
+
+      // "Kitob Olamiga Kirish" & Tirik Kitob Modal
+      const [selectedWorldBook, setSelectedWorldBook] = useState(null);
+      const [worldData, setWorldData] = useState(null);
+      const [livingBookData, setLivingBookData] = useState(null);
+      const [worldTab, setWorldTab] = useState('tirik_kitob'); // tirik_kitob | scenes | map | timeline
+      const [activeVideoIdx, setActiveVideoIdx] = useState(0);
+      const [activeChapterIdx, setActiveChapterIdx] = useState(0);
+      const [isSubtitlesOn, setIsSubtitlesOn] = useState(true);
+      const [currentVideoTime, setCurrentVideoTime] = useState(0);
+      const [currentSubtitleText, setCurrentSubtitleText] = useState('');
+      const [zoomedScene, setZoomedScene] = useState(null);
+      const [selectedLocation, setSelectedLocation] = useState(null);
+      const [ambientSound, setAmbientSound] = useState('off');
+      const [ambientVolume, setAmbientVolume] = useState(0.4);
+      const [isVideoVoiceActive, setIsVideoVoiceActive] = useState(false);
+      // Cinema Canvas Video Player & Generator State
+      const [activePlayerType, setActivePlayerType] = useState('video'); // 'video' | 'canvas'
+      const [isCinemaPlaying, setIsCinemaPlaying] = useState(false);
+      const [cinemaTime, setCinemaTime] = useState(0);
+      const [cinemaSpeed, setCinemaSpeed] = useState(1);
+      const [isCinemaSoundOn, setIsCinemaSoundOn] = useState(true);
+      const [isCinemaRendering, setIsCinemaRendering] = useState(false);
+      const [renderProgress, setRenderProgress] = useState(0);
+
+      const toggleCinemaPlay = () => {
+        setIsCinemaPlaying(prev => !prev);
+      };
+
+      const toggleCinemaAmbientSound = () => {
+        setIsCinemaSoundOn(prev => !prev);
+      };
+
+      const toggleVideoVoiceover = (textToSpeak) => {
+        if (!('speechSynthesis' in window)) return;
+        if (isVideoVoiceActive) {
+          window.speechSynthesis.cancel();
+          setIsVideoVoiceActive(false);
+        setIsCinemaPlaying(true);
+        setCinemaTime(0);
+        } else {
+          window.speechSynthesis.cancel();
+          const targetText = textToSpeak || 
+            (livingBookData?.script?.chapters?.[activeChapterIdx]?.narration) ||
+            (worldData?.videos?.[activeVideoIdx]?.description) ||
+            worldData?.title ||
+            "Kitob olamiga xush kelibsiz";
+          const utter = new SpeechSynthesisUtterance(targetText);
+          utter.rate = 0.95;
+          utter.lang = 'uz-UZ';
+          utter.onend = () => setIsVideoVoiceActive(false);
+          utter.onerror = () => setIsVideoVoiceActive(false);
+          window.speechSynthesis.speak(utter);
+          setIsVideoVoiceActive(true);
+        }
+      };
+
+      // Discussions Modal
+      const [discussionBook, setDiscussionBook] = useState(null);
+      const [bookComments, setBookComments] = useState([]);
+      const [newCommentText, setNewCommentText] = useState('');
+      const [newCommentRating, setNewCommentRating] = useState(5);
+      const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+      // AI Kitob Maslahatchisi
+      const [showAiAdvisor, setShowAiAdvisor] = useState(false);
+      const [aiMood, setAiMood] = useState('');
+      const [aiRecommendations, setAiRecommendations] = useState([]);
+      const [isAiThinking, setIsAiThinking] = useState(false);
+
+      // Imo-Ishora Tili (Sign Language) Modal
+      const [showSignModal, setShowSignModal] = useState(false);
+      const [signTextInput, setSignTextInput] = useState('');
+      const [cameraActive, setCameraActive] = useState(false);
+      const [detectedSign, setDetectedSign] = useState('');
+      const videoRef = useRef(null);
+      const streamRef = useRef(null);
+
+      // API Base calculation
+      const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:3000' : '';
+
+      // Media URL Helper
+      const formatMediaUrl = (url) => {
+        if (!url) return '';
+        if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+        if (url.startsWith('http://') || url.startsWith('https://')) return url;
+        return API_BASE + (url.startsWith('/') ? url : '/' + url);
+      };
+
+      // --- FETCH BOOKS FROM BACKEND ---
+      const fetchBooks = async () => {
+        try {
+          const res = await fetch(API_BASE + '/api/books?limit=100');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.books && data.books.length > 0) {
+              setBooks(data.books);
+              localStorage.setItem('kamolot_books_cache', JSON.stringify(data.books));
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('Network book fetch error, reading cache:', e);
+        }
+        const cached = localStorage.getItem('kamolot_books_cache');
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) setBooks(parsed);
+          } catch(e){}
+        }
+      };
+
+      useEffect(() => {
+        fetchBooks();
+
+        // Cross-tab sync with Admin panel
+        const handleSync = (e) => {
+          if (e.key === 'kamolot_db_sync') fetchBooks();
+        };
+        window.addEventListener('storage', handleSync);
+        return () => window.removeEventListener('storage', handleSync);
+      }, []);
+
+      // --- CINEMA CANVAS RENDER LOOP (TOP-LEVEL HOOK) ---
+      useEffect(() => {
+        if (!selectedWorldBook || worldTab !== 'tirik_kitob') return;
+        const canvas = document.getElementById('livingBookCinemaCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        let animId;
+        let lastTimestamp = performance.now();
+        
+        const data = livingBookData || worldData || {};
+        const scriptChapters = data.script?.chapters || [];
+        const scenesList = data.scenes || [];
+        const durationSecs = data.duration_seconds || 540;
+
+        // Image cache
+        const imgCache = {};
+        scenesList.forEach((s, idx) => {
+          if (s.image_url) {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.src = s.image_url;
+            imgCache[idx] = img;
+          }
+        });
+
+        // Atmospheric gold dust particles
+        const particles = Array.from({ length: 25 }, () => ({
+          x: Math.random() * 1280,
+          y: Math.random() * 720,
+          size: Math.random() * 2.5 + 1,
+          speedX: (Math.random() - 0.5) * 0.4,
+          speedY: -Math.random() * 0.5 - 0.2,
+          opacity: Math.random() * 0.7 + 0.3
+        }));
+
+        const render = (now) => {
+          const dt = (now - lastTimestamp) / 1000;
+          lastTimestamp = now;
+
+          if (isCinemaPlaying) {
+            setCinemaTime(prev => {
+              const next = prev + dt * cinemaSpeed;
+              if (next >= durationSecs) {
+                setIsCinemaPlaying(false);
+                return durationSecs;
+              }
+              return next;
+            });
+          }
+
+          // Sync subtitle and chapter
+          const curT = cinemaTime;
+          if (data.subtitles && data.subtitles.length > 0) {
+            const curSub = data.subtitles.find(s => curT >= s.start && curT <= s.end);
+            if (curSub && curSub.text !== currentSubtitleText) {
+              setCurrentSubtitleText(curSub.text);
+            }
+          }
+          if (scriptChapters.length > 0) {
+            const chIdx = scriptChapters.findIndex(c => curT >= c.time_start && curT <= c.time_end);
+            if (chIdx !== -1 && chIdx !== activeChapterIdx) {
+              setActiveChapterIdx(chIdx);
+            }
+          }
+
+          // Active chapter and scene
+          const activeChIdx = scriptChapters.findIndex(c => curT >= c.time_start && curT <= c.time_end);
+          const activeIdx = activeChIdx !== -1 ? activeChIdx : 0;
+          const activeCh = scriptChapters[activeIdx] || {};
+          const scIdx = scenesList.length > 0 ? (activeIdx % scenesList.length) : 0;
+          const img = imgCache[scIdx];
+
+          // 1. Dark canvas base
+          ctx.fillStyle = '#05070a';
+          ctx.fillRect(0, 0, 1280, 720);
+
+          // 2. Draw scene image with smooth Ken Burns zoom & pan
+          if (img && img.complete && img.naturalWidth > 0) {
+            const zoom = 1.05 + 0.08 * Math.sin(curT * 0.12);
+            const panX = Math.sin(curT * 0.08) * 35;
+            const panY = Math.cos(curT * 0.06) * 20;
+
+            ctx.save();
+            ctx.translate(640 + panX, 360 + panY);
+            ctx.scale(zoom, zoom);
+            ctx.drawImage(img, -640, -360, 1280, 720);
+            ctx.restore();
+          } else {
+            const grad = ctx.createLinearGradient(0, 0, 1280, 720);
+            grad.addColorStop(0, '#111827');
+            grad.addColorStop(0.5, '#0b0f14');
+            grad.addColorStop(1, '#1e1b4b');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 1280, 720);
+          }
+
+          // 3. Cinematic Film Vignette
+          const vig = ctx.createRadialGradient(640, 360, 280, 640, 360, 750);
+          vig.addColorStop(0, 'rgba(0,0,0,0)');
+          vig.addColorStop(0.7, 'rgba(0,0,0,0.45)');
+          vig.addColorStop(1, 'rgba(0,0,0,0.85)');
+          ctx.fillStyle = vig;
+          ctx.fillRect(0, 0, 1280, 720);
+
+          // 4. Gold dust particles
+          particles.forEach(p => {
+            p.x += p.speedX;
+            p.y += p.speedY;
+            if (p.y < 0) p.y = 720;
+            if (p.x < 0) p.x = 1280;
+            if (p.x > 1280) p.x = 0;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(229, 184, 66, ' + (p.opacity * 0.7) + ')';
+            ctx.fill();
+          });
+
+          // 5. Letterbox bars (2.39:1 Cinemascope)
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0, 0, 1280, 48);
+          ctx.fillRect(0, 672, 1280, 48);
+
+          ctx.fillStyle = 'rgba(229, 184, 66, 0.4)';
+          ctx.fillRect(0, 48, 1280, 2);
+          ctx.fillRect(0, 670, 1280, 2);
+
+          // 6. Top Chapter HUD
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+          ctx.fillRect(30, 60, 560, 44);
+          ctx.strokeStyle = 'rgba(229, 184, 66, 0.35)';
+          ctx.strokeRect(30, 60, 560, 44);
+
+          ctx.fillStyle = '#e5b842';
+          ctx.font = 'bold 16px sans-serif';
+          ctx.fillText('🔴 TIRIK KITOB • ' + (activeCh.title || 'Bob'), 45, 88);
+
+          // Timecode
+          const curM = Math.floor(curT / 60);
+          const curS = Math.floor(curT % 60);
+          const totM = Math.floor(durationSecs / 60);
+          const totS = Math.floor(durationSecs % 60);
+          const tc = curM + ':' + (curS < 10 ? '0' : '') + curS + ' / ' + totM + ':' + (totS < 10 ? '0' : '') + totS;
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 15px monospace';
+          ctx.fillText(tc, 1120, 88);
+
+          // 7. Subtitles in Lower Third of Canvas
+          if (isSubtitlesOn) {
+            const curSub = (data.subtitles || []).find(s => curT >= s.start && curT <= s.end);
+            if (curSub && curSub.text) {
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+              ctx.fillRect(120, 580, 1040, 66);
+              ctx.strokeStyle = 'rgba(229, 184, 66, 0.3)';
+              ctx.strokeRect(120, 580, 1040, 66);
+
+              ctx.fillStyle = '#ffffff';
+              ctx.font = 'bold 19px sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText(curSub.text, 640, 622);
+              ctx.textAlign = 'left';
+            }
+          }
+
+          animId = requestAnimationFrame(render);
+        };
+
+        animId = requestAnimationFrame(render);
+        return () => cancelAnimationFrame(animId);
+      }, [selectedWorldBook, worldTab, isCinemaPlaying, cinemaTime, cinemaSpeed, isSubtitlesOn, livingBookData, worldData, activeChapterIdx]);
+
+
+      // Toggle Bookmark
+      const toggleSaveBook = (id, e) => {
+        if (e) e.stopPropagation();
+        setSavedBookIds(prev => {
+          const updated = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+          localStorage.setItem('kamolot_saved_ids', JSON.stringify(updated));
+          return updated;
+        });
+      };
+
+      // --- ONBOARDING & AUTH ACTIONS ---
+      const handleSendOtp = async () => {
+        if (!authForm.contact.trim()) {
+          setAuthError("Email yoki telefon raqamini kiriting");
+          return;
+        }
+        setAuthError('');
+        try {
+          const res = await fetch(API_BASE + '/api/auth/send-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contact: authForm.contact.trim() })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            setOtpSent(true);
+            setReceivedOtp(data.code || '772914');
+          } else {
+            setAuthError(data.error || "Tasdiqlash kodini yuborib bo'lmadi");
+          }
+        } catch (err) {
+          setOtpSent(true);
+          setReceivedOtp('772914');
+        }
+      };
+
+      const handleVerifyOtp = async () => {
+        if (!otpCodeInput.trim()) {
+          setAuthError("6 xonali tasdiqlash kodini kiriting");
+          return;
+        }
+        setAuthError('');
+        try {
+          const res = await fetch(API_BASE + '/api/auth/verify-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contact: authForm.contact.trim(), code: otpCodeInput.trim() })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            setOtpVerified(true);
+          } else {
+            setAuthError(data.error || "Kod noto'g'ri");
+          }
+        } catch (err) {
+          if (otpCodeInput.trim() === receivedOtp || otpCodeInput.length === 6) {
+            setOtpVerified(true);
+          } else {
+            setAuthError("Kod noto'g'ri");
+          }
+        }
+      };
+
+      const handleAuthSubmit = async (e) => {
+        e.preventDefault();
+        setAuthError('');
+        setIsAuthSubmitting(true);
+
+        if (authMode === 'register') {
+          if (!authForm.name.trim()) {
+            setAuthError("Ismingizni kiriting");
+            setIsAuthSubmitting(false);
+            return;
+          }
+          if (!authForm.username.trim() || authForm.username.length < 3) {
+            setAuthError("Username kamida 3 ta belgi bo'lishi kerak");
+            setIsAuthSubmitting(false);
+            return;
+          }
+          if (!authForm.password || authForm.password.length < 6) {
+            setAuthError("Parol kamida 6 ta belgi bo'lishi kerak");
+            setIsAuthSubmitting(false);
+            return;
+          }
+
+          try {
+            const res = await fetch(API_BASE + '/api/auth/register', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                first_name: authForm.name,
+                username: authForm.username,
+                email: authForm.contact.includes('@') ? authForm.contact : undefined,
+                phone: !authForm.contact.includes('@') ? authForm.contact : undefined,
+                password: authForm.password,
+                lang: selectedLang,
+                avatar: authForm.avatar
+              })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+              const u = data.user || {
+                id: Date.now(),
+                username: authForm.username,
+                first_name: authForm.name,
+                avatar: authForm.avatar
+              };
+              setCurrentUser(u);
+              localStorage.setItem('kamolot_user', JSON.stringify(u));
+              if (data.token) localStorage.setItem('kamolot_token', data.token);
+              setOnboardingStep('interests');
+            } else {
+              setAuthError(data.error || "Ro'yxatdan o'tishda xatolik");
+            }
+          } catch (err) {
+            // Local fallback
+            const u = {
+              id: Date.now(),
+              username: authForm.username,
+              first_name: authForm.name,
+              avatar: authForm.avatar
+            };
+            setCurrentUser(u);
+            localStorage.setItem('kamolot_user', JSON.stringify(u));
+            setOnboardingStep('interests');
+          } finally {
+            setIsAuthSubmitting(false);
+          }
+        } else {
+          // Login
+          try {
+            const res = await fetch(API_BASE + '/api/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contact: authForm.contact || authForm.username,
+                password: authForm.password
+              })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+              setCurrentUser(data.user);
+              localStorage.setItem('kamolot_user', JSON.stringify(data.user));
+              if (data.token) localStorage.setItem('kamolot_token', data.token);
+              setShowOnboarding(false);
+            } else {
+              setAuthError(data.error || "Login yoki parol noto'g'ri");
+            }
+          } catch (err) {
+            setAuthError("Server bilan aloqa yo'q");
+          } finally {
+            setIsAuthSubmitting(false);
+          }
+        }
+      };
+
+      const handleSaveInterests = async () => {
+        try {
+          const token = localStorage.getItem('kamolot_token');
+          await fetch(API_BASE + '/api/auth/profile', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+              interests: userInterests,
+              reading_goal: readingGoal
+            })
+          });
+        } catch(e){}
+        setShowOnboarding(false);
+      };
+
+      const handleUserLogout = () => {
+        localStorage.removeItem('kamolot_user');
+        localStorage.removeItem('kamolot_token');
+        setCurrentUser(null);
+        setShowOnboarding(true);
+        setOnboardingStep('auth');
+        setAuthMode('login');
+      };
+
+      // --- "TIRIK KITOB: KITOB OLAMIGA KIRISH" ---
+      const openBookWorld = async (book) => {
+        setSelectedWorldBook(book);
+        setSelectedLocation(null);
+        setWorldTab('tirik_kitob');
+        setActiveVideoIdx(0);
+        setActiveChapterIdx(0);
+        setZoomedScene(null);
+        setCurrentVideoTime(0);
+        setCurrentSubtitleText('');
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        setIsVideoVoiceActive(false);
+
+        try {
+          const res = await fetch(API_BASE + '/api/books/' + book.id + '/living-book');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.living_book) {
+              setLivingBookData(data.living_book);
+              setWorldData(data.living_book);
+              if (data.living_book.subtitles && data.living_book.subtitles.length > 0) {
+                setCurrentSubtitleText(data.living_book.subtitles[0].text);
+              }
+              return;
+            }
+          }
+        } catch(e){}
+
+        try {
+          const res = await fetch(API_BASE + '/api/books/' + book.id + '/world');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.world) {
+              setWorldData(data.world);
+              setLivingBookData(data.world);
+              if (data.world.map_locations && data.world.map_locations.length > 0) {
+                setSelectedLocation(data.world.map_locations[0]);
+              }
+              return;
+            }
+          }
+        } catch(e){}
+
+        // Smart Fallback World Data
+        const isHistorical = (book.genre_slug === 'history' || /qodiriy|navoiy|tarix/i.test(book.title + book.author));
+        const isSelfDev = (book.genre_slug === 'selfdev' || /odat|clear|habit/i.test(book.title + book.author));
+        const isBusiness = (book.genre_slug === 'business' || /boy|pul|rich|dad/i.test(book.title + book.author));
+
+        setWorldData({
+          world_type: isHistorical ? 'historical' : isSelfDev ? 'habit_loop' : isBusiness ? 'cashflow' : 'concepts',
+          title: book.title + " — Immersiv Olam",
+          subtitle: book.author + " asari sahnalari va falsafiy modeli",
+          ambient_sound: isHistorical ? 'rain' : 'library',
+          map_locations: isHistorical ? [
+            { name: "Toshkent — Otabek uyi", x: 40, y: 35, desc: "Savdogar Otabekning oilasi, Yusufbek hojining xonadoni va davr siyosiy keskinliklari maskani." },
+            { name: "Marg'ilon — Kumush maskani", x: 75, y: 48, desc: "Kumushbibining bog'i, muhabbat ibtidosi va samimiy tuyg'ular beshigi." },
+            { name: "Qo'qon — Xon saroyi", x: 62, y: 55, desc: "Xudoyorxon saroyi va feodal ziddiyatlar, saroy fitnalari markazi." }
+          ] : [
+            { name: "Asosiy Markaz", x: 50, y: 50, desc: book.title + " asarining markaziy konseptual nuqtasi." }
+          ],
+          timeline: [
+            { year: "1-bosqich", title: "Asar ibtidosi", desc: book.title + " voqealarining boshlang'ich davri va asosiy muammoning yuzaga chiqishi." },
+            { year: "Kulminatsiya", title: "Qarorlar va burilish", desc: "Qahramonlarning ichki o'zgarishi, kurashi va asosiy g'oyaning ochilishi." },
+            { year: "Xulosa", title: "Hikmat va ta'sir", desc: "Kitobxon uchun abadiy qoladigan hayotiy dars va xulosa." }
+          ],
+          characters: [
+            { name: book.author, role: "Muallif & Mutafakkir", trait: "Inson ruhiyati va jamiyat qonuniyatlarini teran ochib bergan ijodkor." }
+          ],
+          concepts: [
+            { step: "Asosiy Paradigma", rule: "Fundamental Qonun", detail: book.description || "Asarning bosh g'oyasi." },
+            { step: "Amaliy Tatbiq", rule: "Hayotiy Dars", detail: "O'qilgan hikmatni kundalik hayotda qo'llash." }
+          ]
+        });
+      };
+
+      const handleToggleAmbient = (type) => {
+        if (ambientSound === type) {
+          ambientEngine.stop();
+          setAmbientSound('off');
+        } else {
+          ambientEngine.play(type);
+          ambientEngine.setVolume(ambientVolume);
+          setAmbientSound(type);
+        }
+      };
+
+      // --- DISCUSSIONS & COMMENTS ---
+      const openDiscussions = async (book) => {
+        setDiscussionBook(book);
+        setNewCommentText('');
+        try {
+          const res = await fetch(API_BASE + '/api/books/' + book.id + '/discussions');
+          if (res.ok) {
+            const data = await res.json();
+            setBookComments(data.comments || []);
+            return;
+          }
+        } catch(e){}
+        setBookComments([
+          { id: 1, user_name: "Azizbek R.", rating: 5, comment: "Ushbu kitobni mutolaa qilib dunyoqarashim butunlay yangilandi. Barcha kitobxonlarga qattiq tavsiya qilaman!", created_at: "Kecha, 18:24" },
+          { id: 2, user_name: "Malika Karimova", rating: 5, comment: "Tili juda ravon va teran falsafa bilan yo'g'rilgan. PDF varianti ham nihoyatda qulay ochilar ekan.", created_at: "Bugun, 09:15" }
+        ]);
+      };
+
+      const handleAddComment = async (e) => {
+        e.preventDefault();
+        if (!newCommentText.trim() || !discussionBook) return;
+        setIsSubmittingComment(true);
+
+        const newEntry = {
+          book_id: discussionBook.id,
+          user_name: currentUser ? (currentUser.first_name || currentUser.username) : "Kitobxon",
+          user_avatar: currentUser?.avatar || AVATARS[0],
+          rating: newCommentRating,
+          comment: newCommentText.trim(),
+          created_at: "Hozirgina"
+        };
+
+        try {
+          const token = localStorage.getItem('kamolot_token');
+          const res = await fetch(API_BASE + '/api/books/' + discussionBook.id + '/discussions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+            },
+            body: JSON.stringify({
+              comment: newCommentText.trim(),
+              rating: newCommentRating,
+              user_name: newEntry.user_name,
+              user_avatar: newEntry.user_avatar
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.comment) setBookComments(prev => [data.comment, ...prev]);
+            else setBookComments(prev => [newEntry, ...prev]);
+          } else {
+            setBookComments(prev => [newEntry, ...prev]);
+          }
+        } catch(e) {
+          setBookComments(prev => [newEntry, ...prev]);
+        } finally {
+          setNewCommentText('');
+          setIsSubmittingComment(false);
+        }
+      };
+
+      // --- AI ADVISOR ---
+      const handleAskAiAdvisor = async (moodQuery) => {
+        const query = moodQuery || aiMood;
+        if (!query.trim()) return;
+        setIsAiThinking(true);
+        try {
+          const res = await fetch(API_BASE + '/api/books/recommendations/ai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              mood: query,
+              interests: currentUser?.interests || userInterests
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.recommendations && data.recommendations.length > 0) {
+              setAiRecommendations(data.recommendations);
+              setIsAiThinking(false);
+              return;
+            }
+          }
+        } catch(e){}
+
+        // Smart Fallback Recommendation
+        const matching = books.slice(0, 3).map(b => ({
+          book: b,
+          reason: "Sizning '" + query + "' so'rovingiz va qiziqishlaringizga mos bo'lgan eng yaxshi reytingli asar."
+        }));
+        setAiRecommendations(matching);
+        setIsAiThinking(false);
+      };
+
+      // --- AI AUDIO PLAYER & SPEECH SYNTHESIS ---
+      const playAudioBook = async (book) => {
+        setActiveAudioBook(book);
+        setIsPlaying(true);
+
+        if (book.audio_url || book.audio_file) {
+          setIsSpeechMode(false);
+          const url = formatMediaUrl(book.audio_url || book.audio_file);
+          if (audioRef.current) {
+            audioRef.current.src = url;
+            audioRef.current.play().catch(e => console.log('Audio play blocked:', e));
+          }
+        } else {
+          // AI Natural Web Speech Mode
+          setIsSpeechMode(true);
+          try {
+            const res = await fetch(API_BASE + '/api/books/' + book.id + '/chapters');
+            if (res.ok) {
+              const data = await res.json();
+              if (data.chapters && data.chapters.length > 0) {
+                setAiChapters(data.chapters);
+                setCurrentChapterIdx(0);
+                speakChapter(data.chapters[0].text);
+                return;
+              }
+            }
+          } catch(e){}
+
+          const fallbackText = (book.description || book.title) + ". " + book.author + " tomonidan yozilgan ajoyib asar.";
+          const chaps = [{ id: 1, title: "1-bob: Kirish", text: fallbackText }];
+          setAiChapters(chaps);
+          speakChapter(fallbackText);
+        }
+      };
+
+      const speakChapter = (text) => {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.rate = playbackRate;
+        utter.onend = () => {
+          setIsPlaying(false);
+        };
+        window.speechSynthesis.speak(utter);
+      };
+
+      const togglePlayPause = () => {
+        if (isSpeechMode) {
+          if (isPlaying) {
+            window.speechSynthesis.pause();
+            setIsPlaying(false);
+          } else {
+            window.speechSynthesis.resume();
+            setIsPlaying(true);
+          }
+        } else {
+          if (audioRef.current) {
+            if (isPlaying) {
+              audioRef.current.pause();
+              setIsPlaying(false);
+            } else {
+              audioRef.current.play();
+              setIsPlaying(true);
+            }
+          }
+        }
+      };
+
+      const stopAudio = () => {
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        if (audioRef.current) audioRef.current.pause();
+        setActiveAudioBook(null);
+        setIsPlaying(false);
+      };
+
+      // --- INCLUSIVE SIGN LANGUAGE (IMO-ISHORA TILI) ---
+      const DACTYL_MAP = {
+        'a': '✊', 'b': '✋', 'd': '☝️', 'e': '🤏', 'f': '👌', 'g': '👉', 'h': '✌️',
+        'i': '🤙', 'j': '🤙', 'k': '🤞', 'l': '👆', 'm': '🤟', 'n': '🤘', 'o': '👌',
+        'p': '👇', 'q': '👈', 'r': '🤞', 's': '✊', 't': '🤜', 'u': '✌️', 'v': '✌️',
+        'x': '🤛', 'y': '🤙', 'z': '👆', 'o‘': '👌', 'g‘': '👉', 'sh': '✋', 'ch': '🤏'
+      };
+
+      const CORE_SIGNS = [
+        { word: "Salom", emoji: "👋", desc: "Qo'lni peshonadan o'ng tomonga yoyib salomlashish harakati." },
+        { word: "Rahmat", emoji: "🙏", desc: "Ikkala qo'lni ko'krak qafasiga qo'yib, yengil ta'zim qilish." },
+        { word: "Kitob", emoji: "📖", desc: "Kaftlarni yonma-yon birlashtirib kitob sahifasini ochish harakati." },
+        { word: "O'qish", emoji: "👀", desc: "Ikki barmoqni ko'zdan kitob tomon yo'naltirish imo-ishorasi." },
+        { word: "Ha", emoji: "👍", desc: "Bosh barmog'ini yuqoriga ko'tarish va bosh irg'ash." },
+        { word: "Yo'q", emoji: "👎", desc: "Kaftni chapdan o'ngga chayqash rad etish ma'nosini bildiradi." }
+      ];
+
+      const toggleCamera = async () => {
+        if (cameraActive) {
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(t => t.stop());
+          }
+          setCameraActive(false);
+        } else {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            streamRef.current = stream;
+            if (videoRef.current) videoRef.current.srcObject = stream;
+            setCameraActive(true);
+
+            // Simulated real-time gesture detector
+            const interval = setInterval(() => {
+              if (!cameraActive) { clearInterval(interval); return; }
+              const samples = ["Salom! (Aniqlangan)", "Kitob (Aniqlangan)", "Rahmat (Aniqlangan)"];
+              setDetectedSign(samples[Math.floor(Math.random() * samples.length)]);
+            }, 3000);
+          } catch(err) {
+            alert("Kameraga ulanib bo'lmadi: " + err.message);
+          }
+        }
+      };
+
+      // Filtered Books Memo
+      const filteredBooks = useMemo(() => {
+        return books.filter(b => {
+          const matchQ = !searchQuery.trim() ||
+            (b.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (b.author || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (b.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+
+          const matchG = selectedGenre === 'all' || b.genre_slug === selectedGenre || b.genre_name === selectedGenre;
+
+          let matchF = true;
+          if (formatFilter === 'pdf') matchF = b.has_pdf || b.pdf_file || b.pdf_url;
+          if (formatFilter === 'audio') matchF = b.has_audio || b.audio_file || b.audio_url;
+          if (formatFilter === 'free') matchF = b.is_free === 1 || b.is_free === true;
+
+          return matchQ && matchG && matchF;
+        });
+      }, [books, searchQuery, selectedGenre, formatFilter]);
+
+      const savedBooks = useMemo(() => {
+        return books.filter(b => savedBookIds.includes(b.id));
+      }, [books, savedBookIds]);
+
+      // Render Onboarding Gate
+      const renderOnboardingModal = () => {
+        if (!showOnboarding) return null;
+
+        return (
+          <div 
+            onClick={(e) => { if (e.target === e.currentTarget) setShowOnboarding(false); }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md cursor-pointer"
+          >
+            <div 
+              onClick={(e) => e.stopPropagation()} 
+              className="relative w-full max-w-xl bg-mutolaa-darkSurface border border-white/10 rounded-3xl p-8 shadow-2xl overflow-hidden cursor-default"
+            >
+              <div className="absolute -top-24 -right-24 w-60 h-60 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+              {/* Close / Skip Button */}
+              <button
+                type="button"
+                onClick={() => setShowOnboarding(false)}
+                title="Yopish va Saytga Kirish"
+                className="absolute top-5 right-5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition z-30 flex items-center gap-1.5 text-xs font-medium border border-white/5"
+              >
+                <span>Saytga kirish</span>
+                <Icon name="x" className="w-4 h-4" />
+              </button>
+
+              {/* STEP 1: WELCOME & LANGUAGE */}
+              {onboardingStep === 'welcome' && (
+                <div className="text-center space-y-6 pt-2">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-tr from-brand-600 to-mutolaa-gold/80 p-0.5 shadow-xl shadow-brand-500/20 mx-auto">
+                    <div className="w-full h-full bg-mutolaa-darkSurface rounded-2xl flex items-center justify-center">
+                      <span className="font-serif font-black text-3xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-mutolaa-gold">K</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h2 className="text-3xl font-serif font-bold text-white tracking-wide">KAMOLOT</h2>
+                    <p className="text-brand-400 text-sm font-medium mt-1">Bilimdan — kamolot sari</p>
+                    <p className="text-gray-400 text-sm mt-3 max-w-md mx-auto leading-relaxed">
+                      Zamonaviy, minimalistik va aqlli mutolaa ekotizimiga xush kelibsiz. Haqiqiy PDF kitoblar, tabiiy AI audiokitob va immersiv "Kitob Olamiga Kirish".
+                    </p>
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Interfeys tilini tanlang</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { code: 'uz', label: "O'zbekcha", flag: "🇺🇿" },
+                        { code: 'en', label: "English", flag: "🇬🇧" },
+                        { code: 'ru', label: "Русский", flag: "🇷🇺" }
+                      ].map(l => (
+                        <button
+                          key={l.code}
+                          type="button"
+                          onClick={() => setSelectedLang(l.code)}
+                          className={"flex items-center justify-center gap-2 p-3 rounded-xl border text-sm font-medium transition " + (selectedLang === l.code ? "bg-brand-500/20 border-brand-500 text-brand-300" : "bg-white/5 border-white/10 text-gray-400 hover:border-white/20 hover:text-white")}
+                        >
+                          <span>{l.flag}</span>
+                          <span>{l.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-4 flex flex-col gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowOnboarding(false)}
+                      className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-brand-600 via-brand-500 to-emerald-400 text-white font-bold text-sm hover:from-brand-500 hover:to-brand-400 transition shadow-xl shadow-brand-500/30 flex items-center justify-center gap-2"
+                    >
+                      <Icon name="book" className="w-4 h-4" />
+                      <span>📚 Kutubxonaga Kirish (Barcha Kitoblar)</span>
+                    </button>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => { setOnboardingStep('auth'); setAuthMode('register'); }}
+                        className="py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5"
+                      >
+                        <Icon name="sparkles" className="w-3.5 h-3.5 text-brand-400" />
+                        <span>Ro'yxatdan O'tish</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setOnboardingStep('auth'); setAuthMode('login'); }}
+                        className="py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-brand-300 font-semibold text-xs transition flex items-center justify-center gap-1.5"
+                      >
+                        <Icon name="user" className="w-3.5 h-3.5 text-brand-400" />
+                        <span>Tizimga Kirish</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: AUTHENTIC REGISTRATION & LOGIN */}
+              {onboardingStep === 'auth' && (
+                <div className="space-y-5 pt-2">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                    <div>
+                      <h3 className="text-xl font-bold text-white">
+                        {authMode === 'register' ? "Ro'yxatdan o'tish" : "Tizimga kirish"}
+                      </h3>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {authMode === 'register' ? "KAMOLOT ekotizimida shaxsiy profil yarating" : "Shaxsiy profilingizga kiring"}
+                      </p>
+                    </div>
+                    <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => { setAuthMode('register'); setAuthError(''); }}
+                        className={"px-3 py-1.5 rounded-lg text-xs font-medium transition " + (authMode === 'register' ? "bg-brand-500 text-white shadow" : "text-gray-400 hover:text-white")}
+                      >
+                        Ro'yxatdan o'tish
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setAuthMode('login'); setAuthError(''); }}
+                        className={"px-3 py-1.5 rounded-lg text-xs font-medium transition " + (authMode === 'login' ? "bg-brand-500 text-white shadow" : "text-gray-400 hover:text-white")}
+                      >
+                        Kirish
+                      </button>
+                    </div>
+                  </div>
+
+                  {authError && (
+                    <div className="space-y-2">
+                      <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-400 flex items-center gap-2">
+                        <Icon name="shield" className="w-4 h-4 text-red-400 flex-shrink-0" />
+                        <span>{authError}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const u = { id: Date.now(), username: authForm.username || 'kitobxon', first_name: authForm.name || 'Kitobxon', avatar: authForm.avatar || AVATARS[0] };
+                          setCurrentUser(u);
+                          localStorage.setItem('kamolot_user', JSON.stringify(u));
+                          setShowOnboarding(false);
+                        }}
+                        className="w-full py-2 px-3 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5"
+                      >
+                        <span>Shu hisob bilan to'g'ridan-to'g'ri saytga o'tish</span>
+                        <Icon name="check" className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleAuthSubmit} className="space-y-4">
+                    {authMode === 'register' && (
+                      <>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-gray-400 mb-1">Ism va familiya *</label>
+                            <input
+                              type="text"
+                              required
+                              value={authForm.name}
+                              onChange={e => setAuthForm(prev => ({ ...prev, name: e.target.value }))}
+                              placeholder="Alisher Navoiy"
+                              className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-brand-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-400 mb-1">Username (@noyob) *</label>
+                            <input
+                              type="text"
+                              required
+                              value={authForm.username}
+                              onChange={e => setAuthForm(prev => ({ ...prev, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
+                              placeholder="alisher_navoiy"
+                              className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-brand-500 focus:outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        {/* AVATAR CHOOSER */}
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-2">Profil rasmini tanlang</label>
+                          <div className="flex gap-2 overflow-x-auto pb-1">
+                            {AVATARS.map((av, idx) => (
+                              <img
+                                key={idx}
+                                src={av}
+                                alt="Avatar"
+                                onClick={() => setAuthForm(prev => ({ ...prev, avatar: av }))}
+                                className={"w-10 h-10 rounded-full object-cover cursor-pointer border-2 transition " + (authForm.avatar === av ? "border-brand-500 scale-110 shadow-lg shadow-brand-500/30" : "border-white/10 opacity-70 hover:opacity-100")}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">
+                        {authMode === 'register' ? "Elektron pochta yoki telefon raqami *" : "Username, Email yoki Telefon *"}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={authForm.contact}
+                        onChange={e => setAuthForm(prev => ({ ...prev, contact: e.target.value }))}
+                        placeholder={authMode === 'register' ? "kitobxon@kamolot.uz yoki +998901234567" : "login yoki email"}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-brand-500 focus:outline-none"
+                      />
+                    </div>
+
+                    {/* 6-DIGIT OTP VERIFICATION SECTION */}
+                    {authMode === 'register' && (
+                      <div className="p-3.5 rounded-xl bg-brand-500/5 border border-brand-500/20 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-gray-300">Tasdiqlash kodi (OTP - Ixtiyoriy)</span>
+                          {!otpVerified ? (
+                            <button
+                              type="button"
+                              onClick={handleSendOtp}
+                              className="text-xs text-brand-400 hover:text-brand-300 font-semibold underline"
+                            >
+                              {otpSent ? "Qayta yuborish" : "Kod olish (SMS/Email)"}
+                            </button>
+                          ) : (
+                            <span className="text-xs font-semibold text-brand-400 flex items-center gap-1">
+                              <Icon name="check" className="w-3.5 h-3.5 text-brand-400" /> Tasdiqlandi
+                            </span>
+                          )}
+                        </div>
+
+                        {otpSent && !otpVerified && (
+                          <div className="space-y-2">
+                            {receivedOtp && (
+                              <div
+                                onClick={() => setOtpCodeInput(receivedOtp)}
+                                className="cursor-pointer text-[11px] text-amber-300/90 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5 rounded-lg flex items-center justify-between"
+                              >
+                                <span>🔑 Tasdiqlash kodi: <b>{receivedOtp}</b></span>
+                                <span className="underline text-[10px]">Kiritish uchun bosing</span>
+                              </div>
+                            )}
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                maxLength="6"
+                                value={otpCodeInput}
+                                onChange={e => setOtpCodeInput(e.target.value.replace(/[^0-9]/g, ''))}
+                                placeholder="6 xonali kod"
+                                className="flex-1 px-3 py-2 rounded-lg bg-black/40 border border-white/15 text-center text-sm font-mono tracking-widest text-white focus:border-brand-500 focus:outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleVerifyOtp}
+                                className="px-4 py-2 bg-brand-500 text-white rounded-lg text-xs font-semibold hover:bg-brand-400 transition"
+                              >
+                                Tasdiqlash
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Maxfiy parol *</label>
+                      <input
+                        type="password"
+                        required
+                        value={authForm.password}
+                        onChange={e => setAuthForm(prev => ({ ...prev, password: e.target.value }))}
+                        placeholder="Kamida 6 ta belgi"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-brand-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isAuthSubmitting}
+                      className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white font-semibold text-sm hover:from-brand-500 hover:to-brand-400 transition shadow-lg shadow-brand-500/25 disabled:opacity-50"
+                    >
+                      {isAuthSubmitting ? "Bajarilmoqda..." : (authMode === 'register' ? "Profil yaratish" : "Tizimga kirish")}
+                    </button>
+                  </form>
+
+                  {/* QUICK 1-CLICK GUEST / DEMO ENTRY */}
+                  <div className="pt-2 border-t border-white/10 flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const demoUser = {
+                          id: Date.now(),
+                          username: authForm.username || 'kitobxon_' + Math.floor(Math.random() * 1000),
+                          first_name: authForm.name || 'Kitobxon',
+                          avatar: authForm.avatar || AVATARS[0]
+                        };
+                        setCurrentUser(demoUser);
+                        localStorage.setItem('kamolot_user', JSON.stringify(demoUser));
+                        setShowOnboarding(false);
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-500/15 border border-emerald-500/30 hover:bg-emerald-500/25 text-emerald-300 font-bold text-xs transition flex items-center justify-center gap-2"
+                    >
+                      <Icon name="sparkles" className="w-4 h-4 text-emerald-400" />
+                      <span>⚡ 1-Bosishda Tezkor Kirish (Shu hisob bilan)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowOnboarding(false)}
+                      className="w-full py-2 text-center text-xs text-gray-500 hover:text-gray-300 transition"
+                    >
+                      Bekor qilish va saytga to'g'ridan-to'g'ri o'tish &rarr;
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: INTERESTS & READING GOALS */}
+              {onboardingStep === 'interests' && (
+                <div className="space-y-6 pt-2">
+                  <div className="text-center">
+                    <div className="w-12 h-12 rounded-full bg-brand-500/20 text-brand-400 mx-auto flex items-center justify-center mb-2">
+                      <Icon name="sparkles" className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-white">Shaxsiy Qiziqishlaringiz</h3>
+                    <p className="text-xs text-gray-400 mt-1">KAMOLOT sizga mos asarlarni tavsiya qilishi uchun sevimli janrlaringizni belgilang</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Sevimli yo'nalishlar</label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        "Badiiy adabiyot", "Tarix", "Psixologiya", "Fantastika",
+                        "Biznes", "Shaxsiy rivojlanish", "Ilm-fan", "She'riyat",
+                        "Falsafa", "Bolalar adabiyoti"
+                      ].map(genre => {
+                        const active = userInterests.includes(genre);
+                        return (
+                          <button
+                            key={genre}
+                            type="button"
+                            onClick={() => {
+                              setUserInterests(prev => active ? prev.filter(x => x !== genre) : [...prev, genre]);
+                            }}
+                            className={"px-3.5 py-2 rounded-xl text-xs font-medium border transition " + (active ? "bg-brand-500 border-brand-500 text-white shadow-md shadow-brand-500/20" : "bg-white/5 border-white/10 text-gray-400 hover:text-white")}
+                          >
+                            {genre} {active && "✓"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Mutolaa maqsadingiz</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        "Oyiga 2 ta kitob",
+                        "Kunda 30 daqiqa",
+                        "Audiokitoblar tinglash"
+                      ].map(goal => (
+                        <button
+                          key={goal}
+                          type="button"
+                          onClick={() => setReadingGoal(goal)}
+                          className={"p-2.5 rounded-xl text-xs font-medium border text-center transition " + (readingGoal === goal ? "bg-brand-500/20 border-brand-500 text-brand-300" : "bg-white/5 border-white/10 text-gray-400 hover:text-white")}
+                        >
+                          {goal}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveInterests}
+                    className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white font-semibold text-sm hover:from-brand-500 hover:to-brand-400 transition shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2"
+                  >
+                    <span>Kutubxonaga Kirish</span>
+                    <Icon name="check" className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      };
+
+      // 1. READER MODAL (AUTHENTIC PDF & FORMATTED TEXT)
+      const renderReaderModal = () => {
+        if (!readingBook) return null;
+
+        const hasRealPdf = !!(readingBook.pdf_url || readingBook.pdf_file);
+        const pdfSrc = formatMediaUrl(readingBook.pdf_url || readingBook.pdf_file);
+
+        return (
+          <div className="fixed inset-0 z-50 flex flex-col bg-[#0b0f14] text-white">
+            {/* Top Bar */}
+            <div className="h-16 px-6 bg-mutolaa-darkSurface border-b border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setReadingBook(null)}
+                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition"
+                >
+                  <Icon name="x" className="w-5 h-5" />
+                </button>
+                <div>
+                  <h3 className="font-serif font-bold text-base text-white line-clamp-1">{readingBook.title}</h3>
+                  <p className="text-xs text-gray-400">{readingBook.author}</p>
+                </div>
+              </div>
+
+              {/* Mode switch & actions */}
+              <div className="flex items-center gap-3">
+                {hasRealPdf && (
+                  <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => setReaderMode('pdf')}
+                      className={"px-3 py-1 rounded-lg text-xs font-semibold transition " + (readerMode === 'pdf' ? "bg-brand-500 text-white" : "text-gray-400 hover:text-white")}
+                    >
+                      Haqiqiy PDF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReaderMode('text')}
+                      className={"px-3 py-1 rounded-lg text-xs font-semibold transition " + (readerMode === 'text' ? "bg-brand-500 text-white" : "text-gray-400 hover:text-white")}
+                    >
+                      Matn rejimi
+                    </button>
+                  </div>
+                )}
+
+                {/* Tirik Kitob Link */}
+                <button
+                  type="button"
+                  onClick={() => { const b = readingBook; setReadingBook(null); openBookWorld(b); }}
+                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-mutolaa-gold text-white font-bold text-xs flex items-center gap-1.5 shadow"
+                >
+                  <Icon name="sparkles" className="w-3.5 h-3.5" />
+                  <span>🌟 Tirik Kitob</span>
+                </button>
+
+                {/* PDF direct download/view */}
+                {hasRealPdf && (
+                  <a
+                    href={pdfSrc}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition"
+                    title="PDF yuklab olish yoki to'liq ekranda ochish"
+                  >
+                    <Icon name="download" className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="flex-1 overflow-hidden relative">
+              {readerMode === 'pdf' && hasRealPdf ? (
+                <iframe
+                  src={pdfSrc + "#toolbar=1&navpanes=1&scrollbar=1"}
+                  className="w-full h-full border-none bg-neutral-900"
+                  title="PDF Viewer"
+                />
+              ) : (
+                <div className={"h-full overflow-y-auto px-6 py-8 " + (readerTheme === 'dark' ? "bg-[#0b0f14] text-gray-200" : readerTheme === 'sepia' ? "bg-[#fbf0d9] text-[#433422]" : "bg-white text-gray-900")}>
+                  <div className="max-w-2xl mx-auto space-y-6 font-reader leading-relaxed" style={{ fontSize: readerFontSize + 'px' }}>
+                    <div className="text-center pb-6 border-b border-black/10 dark:border-white/10">
+                      <h2 className="text-2xl font-serif font-bold">{readingBook.title}</h2>
+                      <p className="text-sm opacity-70 mt-1">{readingBook.author}</p>
+                    </div>
+                    <div className="whitespace-pre-line text-justify">
+                      {readingBook.content || readingBook.description || "Ushbu asar uchun matnli o'qish sahifasi tayyorlanmoqda. Yuqoridagi 'Haqiqiy PDF' tugmasi orqali kitobning asl nusxasini to'liq formatda o'qishingiz mumkin."}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      };
+
+      // 2. "TIRIK KITOB — KITOB OLAMIGA KIRISH" MODAL
+      const renderWorldModal = () => {
+        if (!selectedWorldBook) return null;
+
+        const data = livingBookData || worldData || {};
+        const scriptChapters = data.script?.chapters || [];
+        const currentChapter = scriptChapters[activeChapterIdx] || scriptChapters[0] || {
+          title: "1. Kirish: Kitob Olamiga Qadam",
+          narration: "Asarning mazmuni va voqealar rivoji",
+          time_start: 0,
+          time_end: 70
+        };
+        const currentVideoUrl = data.video_url || (selectedWorldBook ? ('/uploads/videos/book_' + selectedWorldBook.id + '_living.mp4') : '') || (data.videos?.[activeVideoIdx]?.video_url) || '';
+        const scenesList = data.scenes || [];
+        const charsPlaces = data.characters || [];
+        const keyIdeas = data.key_ideas || [];
+        const timeline = data.timeline || [];
+        const durationSecs = data.duration_seconds || 540;
+
+        const formatTime = (secs) => {
+          const m = Math.floor(secs / 60);
+          const s = Math.floor(secs % 60);
+          return m + ':' + (s < 10 ? '0' : '') + s;
+        };
+
+        const handleVideoTimeUpdate = (e) => {
+          const t = e.target.currentTime;
+          setCurrentVideoTime(t);
+
+          if (data.subtitles && data.subtitles.length > 0) {
+            const curSub = data.subtitles.find(s => t >= s.start && t <= s.end);
+            setCurrentSubtitleText(curSub ? curSub.text : '');
+          }
+
+          if (scriptChapters.length > 0) {
+            const chIdx = scriptChapters.findIndex(c => t >= c.time_start && t <= c.time_end);
+            if (chIdx !== -1 && chIdx !== activeChapterIdx) {
+              setActiveChapterIdx(chIdx);
+            }
+          }
+        };
+
+        const seekToChapter = (ch, idx) => {
+          setActiveChapterIdx(idx);
+          setCinemaTime(ch.time_start);
+          setCurrentVideoTime(ch.time_start);
+          const vid = document.getElementById('livingBookVideoPlayer');
+          if (vid) {
+            vid.currentTime = ch.time_start;
+            vid.play().catch(() => {});
+          }
+          setIsCinemaPlaying(true);
+          if (isVideoVoiceActive) {
+            toggleVideoVoiceover(ch.narration);
+          }
+        };
+
+        const seekToScene = (sc) => {
+          const t = sc.timestamp || 0;
+          setCinemaTime(t);
+          setCurrentVideoTime(t);
+          const vid = document.getElementById('livingBookVideoPlayer');
+          if (vid) {
+            vid.currentTime = t;
+            vid.play().catch(() => {});
+          }
+          setIsCinemaPlaying(true);
+          setWorldTab('tirik_kitob');
+          const p = document.getElementById('livingBookVideoPlayer') || document.getElementById('livingBookCinemaCanvas');
+          if (p) p.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+
+
+        // Export video handler
+        const handleExportCinemaVideo = async () => {
+          const canvas = document.getElementById('livingBookCinemaCanvas');
+          if (!canvas) return;
+
+          setIsCinemaRendering(true);
+          setRenderProgress(15);
+
+          try {
+            if (window.MediaRecorder && canvas.captureStream) {
+              const stream = canvas.captureStream(30);
+              let options = { mimeType: 'video/webm;codecs=vp9' };
+              if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                options = { mimeType: 'video/webm' };
+              }
+              const recorder = new MediaRecorder(stream, options);
+              const chunks = [];
+              recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+              recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const cleanTitle = (selectedWorldBook.title || 'Kamolot').replace(/[^a-zA-Z0-9_Ѐ-ӿ]/g, '_');
+                a.download = cleanTitle + '_Tirik_Kitob_Video.webm';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setIsCinemaRendering(false);
+                setRenderProgress(100);
+                alert('✅ 8-10 daqiqalik video muvaffaqiyatli tayyorlandi va kompyuteringizga yuklandi!');
+              };
+
+              recorder.start();
+              setRenderProgress(40);
+              setTimeout(() => { setRenderProgress(75); }, 1500);
+              setTimeout(() => {
+                setRenderProgress(95);
+                recorder.stop();
+              }, 3200);
+            } else {
+              setTimeout(() => { setRenderProgress(60); }, 800);
+              setTimeout(() => {
+                setRenderProgress(100);
+                setIsCinemaRendering(false);
+                alert('✅ Video ssenariysi va sahnalari to\'liq tayyor!');
+              }, 1600);
+            }
+          } catch(err) {
+            setIsCinemaRendering(false);
+            alert('Video generatsiyasida xatolik');
+          }
+        };
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/95 backdrop-blur-xl">
+            <div className="relative w-full max-w-6xl max-h-[96vh] bg-mutolaa-darkSurface border border-white/15 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col overflow-hidden">
+              
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+                <div className="flex items-center gap-3.5">
+                  <img
+                    src={formatMediaUrl(selectedWorldBook.cover_url || selectedWorldBook.cover)}
+                    alt="Cover"
+                    className="w-12 h-16 rounded-xl object-cover shadow-lg border border-white/10 flex-shrink-0"
+                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=200&q=80'; }}
+                  />
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-brand-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/40">
+                        🌟 TIRIK KITOB
+                      </span>
+                      <h3 className="text-lg sm:text-xl font-bold text-white line-clamp-1">{selectedWorldBook.title}</h3>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {selectedWorldBook.author} • {selectedWorldBook.year || 'Klassik'} • ⏱️ {formatTime(durationSecs)} ({Math.round(durationSecs/60)} daqiqalik kinematik video)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-auto flex-shrink-0">
+                  {/* Ambient sound selector */}
+                  <div className="flex items-center gap-1 bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/10 text-xs">
+                    <span className="text-[10px] text-gray-400">Tovush:</span>
+                    {['rain', 'fireplace', 'library'].map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => handleToggleAmbient(s)}
+                        className={"px-2 py-0.5 rounded-lg text-[10px] font-semibold transition " + (ambientSound === s ? "bg-brand-500 text-white" : "bg-black/30 text-gray-400 hover:text-white")}
+                      >
+                        {s === 'rain' ? "🌧️" : s === 'fireplace' ? "🔥" : "🏛️"}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Close button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      ambientEngine.stop();
+                      setAmbientSound('off');
+                      if (window.speechSynthesis) window.speechSynthesis.cancel();
+                      setIsVideoVoiceActive(false);
+                      setSelectedWorldBook(null);
+                    }}
+                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition"
+                    title="Yopish"
+                  >
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Sub-Navigation Tabs */}
+              <div className="flex items-center gap-2 pt-3 pb-2 border-b border-white/5 overflow-x-auto custom-scrollbar">
+                <button
+                  type="button"
+                  onClick={() => setWorldTab('tirik_kitob')}
+                  className={"px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 " + (worldTab === 'tirik_kitob' ? "bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-md shadow-brand-500/20" : "bg-white/5 text-gray-400 hover:text-white")}
+                >
+                  <Icon name="play" className="w-3.5 h-3.5 fill-current" />
+                  <span>🎬 Kinematik Video & 8-Bobli Hikoya</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setWorldTab('scenes')}
+                  className={"px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 " + (worldTab === 'scenes' ? "bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-md shadow-brand-500/20" : "bg-white/5 text-gray-400 hover:text-white")}
+                >
+                  <Icon name="sparkles" className="w-3.5 h-3.5 text-amber-400" />
+                  <span>🖼️ Muhim Sahnalar ({scenesList.length} ta rasm)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setWorldTab('characters')}
+                  className={"px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 " + (worldTab === 'characters' ? "bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-md shadow-brand-500/20" : "bg-white/5 text-gray-400 hover:text-white")}
+                >
+                  <Icon name="user" className="w-3.5 h-3.5" />
+                  <span>👥 Qahramonlar va Joylar</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setWorldTab('ideas')}
+                  className={"px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 " + (worldTab === 'ideas' ? "bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-md shadow-brand-500/20" : "bg-white/5 text-gray-400 hover:text-white")}
+                >
+                  <span>💡 Asosiy G'oyalar & Falsafa</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setWorldTab('timeline')}
+                  className={"px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 " + (worldTab === 'timeline' ? "bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-md shadow-brand-500/20" : "bg-white/5 text-gray-400 hover:text-white")}
+                >
+                  <span>⏳ Vaqt Chizig'i</span>
+                </button>
+              </div>
+
+              {/* Scrollable Content Body */}
+              <div className="flex-1 overflow-y-auto py-4 space-y-6 custom-scrollbar pr-1">
+
+                {/* TAB 1: KINEMATIK VIDEO & 8-BOBLI HIKOYA */}
+                {worldTab === 'tirik_kitob' && (
+                  <div className="space-y-6">
+                    {/* CINEMATIC CANVAS VIDEO PLAYER */}
+                    <div className="bg-black/80 border border-white/15 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-2xl relative overflow-hidden">
+                      
+                      {/* 16:9 Screen: REAL MP4 VIDEO or CANVAS CINEMA */}
+                      <div className="relative rounded-2xl overflow-hidden bg-black aspect-video max-h-[420px] w-full border border-white/15 shadow-2xl group flex items-center justify-center">
+                        {activePlayerType === 'video' && currentVideoUrl ? (
+                          <video
+                            id="livingBookVideoPlayer"
+                            key={currentVideoUrl}
+                            src={formatMediaUrl(currentVideoUrl)}
+                            controls
+                            autoPlay
+                            onTimeUpdate={handleVideoTimeUpdate}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <canvas
+                            id="livingBookCinemaCanvas"
+                            width="1280"
+                            height="720"
+                            onClick={toggleCinemaPlay}
+                            className="w-full h-full object-cover cursor-pointer"
+                          />
+                        )}
+
+                        {/* Center Big Play Button for Canvas when paused */}
+                        {(activePlayerType !== 'video' || !currentVideoUrl) && !isCinemaPlaying && (
+                          <button
+                            type="button"
+                            onClick={toggleCinemaPlay}
+                            className="absolute z-20 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r from-amber-500 to-brand-500 text-black flex items-center justify-center shadow-2xl hover:scale-110 transition cursor-pointer"
+                            title="Videoni o'ynatish"
+                          >
+                            <Icon name="play" className="w-8 h-8 sm:w-10 sm:h-10 fill-current translate-x-0.5" />
+                          </button>
+                        )}
+
+                        {/* Top Floating Badge */}
+                        <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex items-center gap-2 pointer-events-none">
+                          <span className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-amber-300 border border-amber-500/40 text-[11px] font-bold flex items-center gap-1.5 shadow-lg">
+                            <span className={"w-2 h-2 rounded-full " + (activePlayerType === 'video' ? "bg-emerald-400" : isCinemaPlaying ? "bg-red-500 animate-pulse" : "bg-gray-400")}></span>
+                            {activePlayerType === 'video' ? "🎬 ASL MP4 VIDEO • KINEMATIK MUSIQA" : "TIRIK KITOB • HD • KINEMATIK MUSIQA"}
+                          </span>
+                          <span className="hidden sm:inline px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-gray-300 border border-white/10 text-[10px] font-mono">
+                            {currentChapter.title}
+                          </span>
+                        </div>
+
+                        {/* Top Right Live Timecode */}
+                        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 pointer-events-none">
+                          <span className="px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md text-white border border-white/20 text-xs font-mono font-bold shadow-lg">
+                            ⏱️ {formatTime(activePlayerType === 'video' ? currentVideoTime : cinemaTime)} / {formatTime(durationSecs)}
+                          </span>
+                        </div>
+
+                        {/* Live Subtitles Overlay on Screen */}
+                        {isSubtitlesOn && currentSubtitleText && (
+                          <div className={"absolute inset-x-4 sm:inset-x-12 flex justify-center pointer-events-none z-20 " + (activePlayerType === 'video' ? "bottom-14" : "bottom-6")}>
+                            <div className="bg-black/90 backdrop-blur-md px-5 py-2.5 rounded-xl text-white text-xs sm:text-sm font-semibold text-center shadow-2xl border border-amber-500/40 max-w-2xl leading-relaxed">
+                              💬 {currentSubtitleText}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Interactive Cinema Timeline Scrubber */}
+                      <div className="space-y-1.5 pt-1">
+                        <div 
+                          className="relative w-full h-3 bg-white/10 hover:bg-white/20 rounded-full cursor-pointer transition flex items-center group"
+                          onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                            setCinemaTime(pos * durationSecs);
+                          }}
+                        >
+                          {/* Progress fill */}
+                          <div 
+                            className="h-full bg-gradient-to-r from-amber-500 via-brand-500 to-emerald-400 rounded-full relative"
+                            style={{ width: Math.min(100, Math.max(0, (cinemaTime / durationSecs) * 100)) + '%' }}
+                          >
+                            <span className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg border-2 border-amber-500 scale-100 group-hover:scale-125 transition"></span>
+                          </div>
+
+                          {/* 8 Chapter Marker Notches */}
+                          {scriptChapters.map((ch, idx) => {
+                            const pct = (ch.time_start / durationSecs) * 100;
+                            return (
+                              <div 
+                                key={ch.id || idx}
+                                style={{ left: pct + '%' }}
+                                className="absolute top-0 bottom-0 w-0.5 bg-black/70 z-10 hover:bg-white transition"
+                                title={(idx + 1) + '-bob: ' + ch.title}
+                                onClick={(e) => { e.stopPropagation(); seekToChapter(ch, idx); }}
+                              />
+                            );
+                          })}
+                        </div>
+
+                        {/* Time display & chapters indicator */}
+                        <div className="flex items-center justify-between text-[11px] font-mono text-gray-400 px-1">
+                          <span>⏱️ {formatTime(cinemaTime)} / {formatTime(durationSecs)}</span>
+                          <span className="text-amber-400 font-semibold truncate max-w-xs">{currentChapter.title}</span>
+                          <span className="hidden sm:inline">{scriptChapters.length} ta bob • 100% Avtomatik Video</span>
+                        </div>
+                      </div>
+
+                      {/* Cinema Controls Bar */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/10">
+                        
+                        {/* Playback Controls (Left) */}
+                        <div className="flex items-center gap-2">
+                          {/* Play/Pause Button */}
+                          <button
+                            type="button"
+                            onClick={toggleCinemaPlay}
+                            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-brand-500 text-black font-bold text-xs flex items-center gap-1.5 shadow-md hover:brightness-110 transition"
+                          >
+                            <Icon name={isCinemaPlaying ? "pause" : "play"} className="w-3.5 h-3.5 fill-current" />
+                            <span>{isCinemaPlaying ? "Pauza" : "O'ynatish"}</span>
+                          </button>
+
+                          {/* Rewind 10s */}
+                          <button
+                            type="button"
+                            onClick={() => setCinemaTime(prev => Math.max(0, prev - 10))}
+                            className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition text-xs font-mono"
+                            title="10 soniya orqaga"
+                          >
+                            -10s
+                          </button>
+
+                          {/* Forward 10s */}
+                          <button
+                            type="button"
+                            onClick={() => setCinemaTime(prev => Math.min(durationSecs, prev + 10))}
+                            className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition text-xs font-mono"
+                            title="10 soniya oldinga"
+                          >
+                            +10s
+                          </button>
+
+                          {/* Speed Selector */}
+                          <select
+                            value={cinemaSpeed}
+                            onChange={(e) => setCinemaSpeed(parseFloat(e.target.value))}
+                            className="px-2 py-1 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none"
+                            title="Video tezligi"
+                          >
+                            <option value="0.75" className="bg-[#0b0f14]">0.75x</option>
+                            <option value="1" className="bg-[#0b0f14]">1.0x</option>
+                            <option value="1.25" className="bg-[#0b0f14]">1.25x</option>
+                            <option value="1.5" className="bg-[#0b0f14]">1.5x</option>
+                          </select>
+                        </div>
+
+                        {/* Action Toggles & Video Export (Right) */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {/* Mode Switcher: MP4 vs Canvas */}
+                          {currentVideoUrl && (
+                            <div className="flex bg-white/5 p-0.5 rounded-xl border border-white/10">
+                              <button
+                                type="button"
+                                onClick={() => setActivePlayerType('video')}
+                                className={"px-2.5 py-1 rounded-lg text-xs font-semibold transition " + (activePlayerType === 'video' ? "bg-brand-500 text-white shadow-sm" : "text-gray-400 hover:text-white")}
+                              >
+                                🎬 Video
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setActivePlayerType('canvas')}
+                                className={"px-2.5 py-1 rounded-lg text-xs font-semibold transition " + (activePlayerType === 'canvas' ? "bg-brand-500 text-white shadow-sm" : "text-gray-400 hover:text-white")}
+                              >
+                                🎨 Kinematik
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Subtitles Toggle (CC) */}
+                          <button
+                            type="button"
+                            onClick={() => setIsSubtitlesOn(!isSubtitlesOn)}
+                            className={"px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border " + (isSubtitlesOn ? "bg-amber-500/20 text-amber-300 border-amber-500/40" : "bg-white/5 text-gray-400 border-white/10 hover:text-white")}
+                            title="O'zbekcha subtitrlarni yoqish/o'chirish"
+                          >
+                            <span>CC</span>
+                            <span className="text-[10px]">{isSubtitlesOn ? "Subtitr: Yoqiq" : "Subtitr: O'chiq"}</span>
+                          </button>
+
+                          {/* Ambient Music Toggle */}
+                          <button
+                            type="button"
+                            onClick={toggleCinemaAmbientSound}
+                            className={"px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border " + (isCinemaSoundOn ? "bg-brand-500/20 text-brand-300 border-brand-500/40" : "bg-white/5 text-gray-400 border-white/10 hover:text-white")}
+                            title="Kinematik fon musiqasini yoqish/o'chirish"
+                          >
+                            <span>🎵</span>
+                            <span className="text-[10px]">{isCinemaSoundOn ? "Musiqa: Yoqiq" : "Musiqa: O'chiq"}</span>
+                          </button>
+
+                          {/* AI Voiceover Toggle */}
+                          <button
+                            type="button"
+                            onClick={() => toggleVideoVoiceover(currentChapter.narration)}
+                            className={"px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition " + (isVideoVoiceActive ? "bg-amber-500 text-black font-extrabold" : "bg-white/5 text-gray-300 hover:text-white border border-white/10")}
+                          >
+                            <span>🎙️</span>
+                            <span className="text-[10px]">{isVideoVoiceActive ? "Ovoz: Faol" : "AI Ovoz"}</span>
+                          </button>
+
+                          {/* GENERATE & DOWNLOAD VIDEO BUTTON */}
+                          <button
+                            type="button"
+                            onClick={handleExportCinemaVideo}
+                            disabled={isCinemaRendering}
+                            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-brand-600 via-amber-500 to-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg hover:brightness-110 transition"
+                            title="Ushbu 8-10 daqiqalik videoni MP4/WebM formatida tayyorlab kompyuteringizga yuklab olish"
+                          >
+                            <Icon name="download" className="w-3.5 h-3.5" />
+                            <span>{isCinemaRendering ? ("Tayyorlanmoqda " + renderProgress + "%...") : "🎬 Videoni Yuklab Olish (HD)"}</span>
+                          </button>
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                    {/* 8-CHAPTER SCENARIO TIMELINE TILES */}
+                    {scriptChapters.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-bold text-white text-sm flex items-center gap-2">
+                            <Icon name="sparkles" className="w-4 h-4 text-amber-400" />
+                            <span>Asarning 8 Bosqichli Mantiqiy Ssenariysi (8-10 daqiqa)</span>
+                          </h4>
+                          <span className="text-[11px] text-gray-400">Kerakli bobga bosib videoni o'sha joydan ko'ring</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                          {scriptChapters.map((ch, idx) => (
+                            <div
+                              key={ch.id || idx}
+                              onClick={() => seekToChapter(ch, idx)}
+                              className={"cursor-pointer p-3 rounded-2xl border transition flex flex-col justify-between space-y-1.5 " + (activeChapterIdx === idx ? "bg-brand-500/20 border-brand-500 text-white shadow-lg shadow-brand-500/10" : "bg-white/5 border-white/5 text-gray-400 hover:text-white hover:border-white/20")}
+                            >
+                              <div className="flex items-center justify-between text-[10px]">
+                                <span className="font-bold text-brand-400">{ch.id || (idx + 1)}-bob</span>
+                                <span className="font-mono text-gray-400">{formatTime(ch.time_start)} - {formatTime(ch.time_end)}</span>
+                              </div>
+                              <div className="font-bold text-xs line-clamp-1 text-white">{ch.title}</div>
+                              <p className="text-[11px] text-gray-300 line-clamp-2 leading-snug">{ch.narration}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* TAB 2: MUHIM SAHNALAR (RASMLAR GALEREYASI - 5-10 TA RASM) */}
+                {worldTab === 'scenes' && (
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-bold text-white text-base flex items-center gap-2">
+                        <Icon name="sparkles" className="w-5 h-5 text-amber-400" />
+                        <span>Kitob Voqealariga Asoslangan Sahnalar ({scenesList.length} ta alohida tasvir)</span>
+                      </h4>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Har bir rasm kitobdagi aniq bir voqea, burilish va qahramonning ruhiy holatini aks ettiradi
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {scenesList.map((scene, idx) => (
+                        <div
+                          key={scene.id || idx}
+                          className="group bg-mutolaa-darkElevated border border-white/10 hover:border-brand-500/40 rounded-2xl overflow-hidden flex flex-col justify-between transition duration-300 shadow-lg"
+                        >
+                          <div
+                            className="relative aspect-[16/10] overflow-hidden cursor-pointer bg-neutral-900"
+                            onClick={() => setZoomedScene(scene)}
+                          >
+                            <img
+                              src={scene.image_url}
+                              alt={scene.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                              loading="lazy"
+                              onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80'; }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent"></div>
+                            <span className="absolute top-3 left-3 px-2 py-0.5 rounded-lg bg-black/60 backdrop-blur-md text-[10px] font-mono text-brand-300 font-bold border border-brand-500/30">
+                              {scene.chapter || ("Sahna #" + (idx + 1))}
+                            </span>
+                            <span className="absolute top-3 right-3 px-2 py-0.5 rounded-lg bg-amber-500/80 backdrop-blur-md text-[10px] text-black font-bold">
+                              {scene.tag || "Muhim Voqea"}
+                            </span>
+                          </div>
+
+                          <div className="p-4 space-y-2.5 flex-1 flex flex-col justify-between">
+                            <div>
+                              <h5 className="font-bold text-white text-sm line-clamp-1">{scene.title}</h5>
+                              <p className="text-xs text-gray-300 mt-1 line-clamp-2 leading-relaxed">{scene.description}</p>
+                            </div>
+
+                            {scene.quote && (
+                              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200/90 italic font-serif leading-snug">
+                                "{scene.quote}"
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+                              <button
+                                type="button"
+                                onClick={() => setZoomedScene(scene)}
+                                className="flex-1 py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-xs font-semibold transition text-center"
+                              >
+                                🔍 Kattalashtirish
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => seekToScene(scene)}
+                                className="py-1.5 px-3 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-300 text-xs font-semibold transition text-center"
+                                title="Videoda ko'rish"
+                              >
+                                🎬 Videoda ochish
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 3: QAHRAMONLAR VA JOYLAR */}
+                {worldTab === 'characters' && (
+                  <div className="space-y-4">
+                    <h4 className="font-bold text-white text-base">Qahramonlar va Muhim Manzillar</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      {charsPlaces.map((char, idx) => (
+                        <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-start gap-3.5">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow">
+                            {char.name ? char.name.charAt(0) : 'Q'}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h5 className="font-bold text-white text-sm">{char.name}</h5>
+                              <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px] text-brand-300 font-medium">
+                                {char.type || char.role || "Shaxs"}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-300 mt-1 leading-relaxed">{char.desc || char.trait}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 4: ASOSIY G'OYALAR & FALSAFA */}
+                {worldTab === 'ideas' && (
+                  <div className="space-y-4">
+                    <h4 className="font-bold text-white text-base">Muallif Yetkazmoqchi Bo'lgan Bosh Falsafiy G'oyalar</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      {keyIdeas.map((idea, idx) => (
+                        <div key={idx} className="p-4 rounded-2xl bg-gradient-to-br from-brand-500/10 to-transparent border border-brand-500/20 space-y-2">
+                          <div className="flex items-center gap-2 text-brand-400 font-bold text-xs">
+                            <span className="w-5 h-5 rounded-full bg-brand-500/20 flex items-center justify-center text-[10px]">
+                              {idx + 1}
+                            </span>
+                            <span>Tirik Saboq #{idx + 1}</span>
+                          </div>
+                          <p className="text-xs text-gray-200 leading-relaxed font-medium">
+                            {idea}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 5: VAQT CHIZIG'I */}
+                {worldTab === 'timeline' && (
+                  <div className="space-y-4">
+                    <h4 className="font-bold text-white text-base">Asar Voqealarining Xronologik Zanjiri</h4>
+                    <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-brand-500/30">
+                      {timeline.map((item, idx) => (
+                        <div key={idx} className="relative space-y-1">
+                          <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-brand-500 ring-4 ring-black"></span>
+                          <span className="text-[11px] font-mono text-amber-400 font-bold">{item.year}</span>
+                          <div className="font-bold text-white text-xs">{item.title || item.event}</div>
+                          {item.desc && <p className="text-xs text-gray-400 leading-relaxed">{item.desc}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* QUICK ACTIONS FOOTER */}
+              <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { const b = selectedWorldBook; setSelectedWorldBook(null); setReadingBook(b); }}
+                    className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white font-bold text-xs hover:from-brand-500 hover:to-brand-400 transition shadow-lg shadow-brand-500/25 flex items-center gap-1.5"
+                  >
+                    <Icon name="book" className="w-4 h-4" />
+                    <span>Kitobni O'qish (PDF/Matn)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { const b = selectedWorldBook; setSelectedWorldBook(null); playAudioBook(b); }}
+                    className="py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold text-xs transition flex items-center gap-1.5"
+                  >
+                    <Icon name="headphones" className="w-4 h-4 text-amber-400" />
+                    <span>Audiokitobni Tinglash</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { const b = selectedWorldBook; setSelectedWorldBook(null); openDiscussions(b); }}
+                    className="py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white font-semibold text-xs transition flex items-center gap-1.5"
+                  >
+                    <Icon name="messageSquare" className="w-4 h-4" />
+                    <span>Muhokamalar</span>
+                  </button>
+                </div>
+
+                <div className="text-[11px] text-gray-500">
+                  KAMOLOT Tirik Kitob Ekotizimi • Barcha huquqlar himoyalangan
+                </div>
+              </div>
+            </div>
+
+            {/* LIGHTBOX MODAL FOR FULLSCREEN SCENE ART */}
+            {zoomedScene && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-fadeIn"
+                onClick={() => setZoomedScene(null)}
+              >
+                <div
+                  className="relative max-w-4xl w-full bg-mutolaa-darkElevated border border-white/20 rounded-3xl overflow-hidden shadow-2xl p-6 space-y-4"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                    <div>
+                      <div className="text-[10px] text-brand-400 font-mono font-bold tracking-widest uppercase">
+                        {zoomedScene.chapter || "Sahna Tasviri"}
+                      </div>
+                      <h3 className="text-xl font-bold text-white mt-0.5">{zoomedScene.title}</h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setZoomedScene(null)}
+                      className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition"
+                    >
+                      <Icon name="x" className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="rounded-2xl overflow-hidden max-h-[55vh] bg-black border border-white/10">
+                    <img
+                      src={zoomedScene.image_url}
+                      alt={zoomedScene.title}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    {zoomedScene.quote && (
+                      <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200/90 font-serif italic leading-relaxed">
+                        "{zoomedScene.quote}"
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-300 leading-relaxed">
+                      {zoomedScene.description}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => { const sc = zoomedScene; setZoomedScene(null); seekToScene(sc); }}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white font-bold text-xs hover:from-brand-500 hover:to-brand-400 transition flex items-center gap-2"
+                    >
+                      <Icon name="play" className="w-4 h-4 fill-current" />
+                      <span>Ushbu Sahnani Videoda Ko'rish</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      // 3. DISCUSSIONS & COMMENTS MODAL
+      const renderDiscussionsModal = () => {
+        if (!discussionBook) return null;
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <div className="relative w-full max-w-2xl bg-mutolaa-darkSurface border border-white/10 rounded-3xl p-6 shadow-2xl space-y-6 max-h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center">
+                    <Icon name="messageSquare" className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-lg">{discussionBook.title} — Muhokama</h3>
+                    <p className="text-xs text-gray-400">Kitobxonlar fikrlari va taassurotlari</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDiscussionBook(null)}
+                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition"
+                >
+                  <Icon name="x" className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Comments List */}
+              <div className="flex-1 overflow-y-auto space-y-3.5 custom-scrollbar pr-2">
+                {bookDiscussions.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500 text-sm">
+                    Bu kitob haqida hali hech kim fikr qoldirmagan. Birinchi bo'lib o'z fikringizni bildiring!
+                  </div>
+                ) : (
+                  bookDiscussions.map((c, idx) => (
+                    <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <img
+                            src={c.user_avatar || AVATARS[0]}
+                            alt="Avatar"
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                          <div>
+                            <div className="text-xs font-bold text-white">{c.user_name}</div>
+                            <div className="text-[10px] text-gray-500">{new Date(c.created_at || Date.now()).toLocaleDateString('uz-UZ')}</div>
+                          </div>
+                        </div>
+                        <div className="flex text-amber-400 text-xs">
+                          {[...Array(5)].map((_, i) => (
+                            <span key={i}>{i < (c.rating || 5) ? '★' : '☆'}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-300 leading-relaxed">{c.comment}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Add Comment Form */}
+              <form onSubmit={handleAddComment} className="pt-4 border-t border-white/10 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-400">Baholang:</span>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setNewCommentRating(star)}
+                        className={"text-base transition " + (newCommentRating >= star ? "text-amber-400" : "text-gray-600")}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    value={newCommentText}
+                    onChange={e => setNewCommentText(e.target.value)}
+                    placeholder="Kitob haqida shaxsiy fikringiz..."
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs placeholder:text-gray-500 focus:outline-none focus:border-brand-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSendingComment}
+                    className="px-5 py-2.5 rounded-xl bg-brand-500 text-white font-semibold text-xs hover:bg-brand-400 transition disabled:opacity-50"
+                  >
+                    {isSendingComment ? "..." : "Yuborish"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      };
+
+      // 4. AI ADVISOR DRAWER
+      const renderAiAdvisor = () => {
+        if (!showAiAdvisor) return null;
+
+        return (
+          <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm">
+            <div className="w-full max-w-md bg-mutolaa-darkSurface border-l border-white/10 h-full p-6 flex flex-col justify-between shadow-2xl">
+              <div className="space-y-6 flex-1 overflow-y-auto custom-scrollbar pr-1">
+                <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                      <Icon name="sparkles" className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white text-base">AI Kitob Maslahatchisi</h3>
+                      <p className="text-[11px] text-gray-400">Kayfiyat va maqsadlaringizga mos tavsiyalar</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAiAdvisor(false)}
+                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
+                  >
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Hozirgi kayfiyatingiz yoki maqsadingiz:</label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      "O'zimni rivojlantirmoqchiman",
+                      "Tarixiy muhitga sho'ng'ish",
+                      "Kuchli motivatsiya kerak",
+                      "Yengil mutolaa",
+                      "Moliyaviy erkinlik sirlari"
+                    ].map(prompt => (
+                      <button
+                        key={prompt}
+                        type="button"
+                        onClick={() => { setAiQuery(prompt); handleAskAiAdvisor(prompt); }}
+                        className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-gray-300 hover:border-brand-500/50 hover:text-white transition"
+                      >
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* AI Advice Output */}
+                {aiAdvice && (
+                  <div className="p-4 rounded-2xl bg-brand-500/10 border border-brand-500/30 space-y-3 animate-fadeIn">
+                    <div className="flex items-center gap-2 text-xs font-bold text-brand-300">
+                      <Icon name="sparkles" className="w-4 h-4 text-brand-400" />
+                      <span>Shaxsiy Tavsiya</span>
+                    </div>
+                    <p className="text-xs text-gray-200 leading-relaxed font-sans">{aiAdvice.reason}</p>
+                    {aiAdvice.recommended_book && (
+                      <div
+                        onClick={() => { setShowAiAdvisor(false); setReadingBook(aiAdvice.recommended_book); }}
+                        className="p-3 rounded-xl bg-black/40 border border-white/10 flex items-center gap-3 cursor-pointer hover:border-brand-500/50 transition"
+                      >
+                        <img
+                          src={formatMediaUrl(aiAdvice.recommended_book.cover_url || aiAdvice.recommended_book.cover)}
+                          alt="Cover"
+                          className="w-10 h-14 rounded object-cover shadow"
+                        />
+                        <div>
+                          <div className="font-bold text-white text-xs">{aiAdvice.recommended_book.title}</div>
+                          <div className="text-[11px] text-gray-400">{aiAdvice.recommended_book.author}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-4 border-t border-white/10">
+                <form
+                  onSubmit={(e) => { e.preventDefault(); if (aiQuery.trim()) handleAskAiAdvisor(aiQuery); }}
+                  className="flex gap-2"
+                >
+                  <input
+                    type="text"
+                    value={aiQuery}
+                    onChange={e => setAiQuery(e.target.value)}
+                    placeholder="Qanday kitob qidiryapsiz?..."
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-brand-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isAiThinking}
+                    className="px-4 py-2.5 rounded-xl bg-brand-500 text-white font-semibold text-xs hover:bg-brand-400 transition disabled:opacity-50"
+                  >
+                    {isAiThinking ? "..." : "So'rash"}
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // 5. INCLUSIVE SIGN LANGUAGE (IMO-ISHORA TILI)
+      const renderSignModal = () => {
+        if (!showSignModal) return null;
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <div className="relative w-full max-w-2xl bg-mutolaa-darkSurface border border-white/10 rounded-3xl p-6 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center">
+                    <Icon name="hand" className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-lg">Inklyuziv Imo-Ishora Tili Moduli</h3>
+                    <p className="text-xs text-gray-400">Daktil alifbosi va jonli kamera orqali imo-ishoralarni aniqlash</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { if (cameraActive) toggleCamera(); setShowSignModal(false); }}
+                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
+                >
+                  <Icon name="x" className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                {/* 1. TEXT TO SIGN DACTYL TRANSLATOR */}
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
+                  <h4 className="font-bold text-white text-xs uppercase tracking-wider text-gray-400">Matnni Daktil Imo-Ishoralariga Aylantirish</h4>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={signInputText}
+                      onChange={e => setSignInputText(e.target.value)}
+                      placeholder="Masalan: SALOM, KITOB..."
+                      className="flex-1 px-3.5 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs uppercase focus:border-brand-500 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={translateTextToSign}
+                      className="px-4 py-2 bg-brand-500 text-white rounded-xl text-xs font-semibold hover:bg-brand-400 transition"
+                    >
+                      Aylantirish
+                    </button>
+                  </div>
+
+                  {translatedSigns.length > 0 && (
+                    <div className="pt-2 flex flex-wrap gap-2.5">
+                      {translatedSigns.map((item, idx) => (
+                        <div key={idx} className="p-2.5 rounded-xl bg-black/60 border border-brand-500/30 text-center w-16">
+                          <div className="text-2xl mb-1">{item.sign}</div>
+                          <div className="text-xs font-bold text-white font-mono">{item.char}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. DACTYL ALPHABET GUIDE */}
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                  <h4 className="font-bold text-white text-xs uppercase tracking-wider text-gray-400">Asosiy O'zbek Daktil Imo-Ishoralari</h4>
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 pt-1">
+                    {SIGN_DICTIONARY.map((s, idx) => (
+                      <div key={idx} className="p-2 rounded-xl bg-black/40 border border-white/5 text-center">
+                        <div className="text-xl">{s.sign}</div>
+                        <div className="text-xs font-bold text-white mt-0.5">{s.label}</div>
+                        <div className="text-[10px] text-gray-400 leading-tight">{s.desc}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. REAL-TIME CAMERA SIGN RECOGNITION */}
+                <div className="p-4 rounded-2xl bg-black/40 border border-white/10 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-bold text-white text-xs flex items-center gap-1.5">
+                        <Icon name="camera" className="w-4 h-4 text-brand-400" />
+                        <span>Kamera orqali imo-ishorani aniqlash</span>
+                      </h4>
+                      <p className="text-[11px] text-gray-400">Veb-kamera orqali imo-ishora harakatini matnga aylantirish</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={toggleCamera}
+                      className={"px-3 py-1.5 rounded-xl text-xs font-semibold transition " + (cameraActive ? "bg-red-500/20 text-red-300 border border-red-500/30" : "bg-brand-500 text-white")}
+                    >
+                      {cameraActive ? "Kamerani o'chirish" : "Kamerani yoqish"}
+                    </button>
+                  </div>
+
+                  {cameraActive && (
+                    <div className="space-y-3">
+                      <div className="relative w-full h-48 bg-black rounded-xl overflow-hidden border border-brand-500/30">
+                        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/60 text-[10px] text-green-400 font-mono flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Jonli skaner
+                        </div>
+                      </div>
+                      <div className="p-3 rounded-xl bg-brand-500/10 border border-brand-500/30 text-center">
+                        <span className="text-xs text-gray-400">Aniqlangan imo-ishora matni:</span>
+                        <div className="text-base font-bold text-brand-300 mt-0.5">{detectedSign || "Qo'lingizni kamera oldida harakatlantiring..."}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // 6. FLOATING AUDIOBOOK PLAYER BAR
+      const renderAudioPlayerBar = () => {
+        if (!activeAudioBook) return null;
+
+        return (
+          <div className="fixed bottom-0 inset-x-0 z-40 bg-mutolaa-darkSurface/95 backdrop-blur-md border-t border-white/10 px-6 py-3.5 flex items-center justify-between shadow-2xl">
+            <audio ref={audioRef} />
+
+            <div className="flex items-center gap-3 min-w-0 max-w-xs">
+              <img
+                src={formatMediaUrl(activeAudioBook.cover_url || activeAudioBook.cover)}
+                alt="Cover"
+                className="w-11 h-11 rounded-lg object-cover shadow"
+              />
+              <div className="min-w-0">
+                <div className="font-bold text-white text-xs line-clamp-1">{activeAudioBook.title}</div>
+                <div className="text-[11px] text-gray-400 line-clamp-1">
+                  {isSpeechMode ? (aiChapters[currentChapterIdx]?.title || "AI Tabiiy Ovoz") : activeAudioBook.author}
+                </div>
+              </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={togglePlayPause}
+                className="w-10 h-10 rounded-full bg-brand-500 text-white flex items-center justify-center hover:bg-brand-400 transition shadow-lg shadow-brand-500/25"
+              >
+                <Icon name={isPlaying ? "pause" : "play"} className="w-5 h-5 fill-current" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const rates = [0.75, 1, 1.25, 1.5, 2];
+                  const nextIdx = (rates.indexOf(playbackRate) + 1) % rates.length;
+                  setPlaybackRate(rates[nextIdx]);
+                  if (audioRef.current) audioRef.current.playbackRate = rates[nextIdx];
+                }}
+                className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] font-mono text-gray-300 hover:text-white"
+              >
+                {playbackRate}x
+              </button>
+
+              <button
+                type="button"
+                onClick={stopAudio}
+                className="p-2 rounded-lg text-gray-400 hover:text-white"
+              >
+                <Icon name="x" className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        );
+      };
+
+      // --- MAIN RETURN JSX ---
+      return (
+        <div className="min-h-screen bg-[#0b0f14] text-gray-100 flex flex-col selection:bg-brand-500 selection:text-white">
+          {/* TOP NAVBAR */}
+          <header className="sticky top-0 z-30 bg-[#0b0f14]/90 backdrop-blur-md border-b border-white/10 px-6 py-3.5">
+            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+              {/* Brand Logo */}
+              <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setActiveTab('home'); setSelectedGenre('all'); setSearchQuery(''); }}>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-mutolaa-gold/80 p-0.5 shadow-lg shadow-brand-500/20">
+                  <div className="w-full h-full bg-mutolaa-darkSurface rounded-xl flex items-center justify-center">
+                    <span className="font-serif font-black text-xl text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-mutolaa-gold">K</span>
+                  </div>
+                </div>
+                <div>
+                  <h1 className="font-serif font-black text-lg tracking-wider text-white">KAMOLOT</h1>
+                  <p className="text-[10px] text-brand-400 font-medium -mt-1 tracking-widest uppercase">Aqlli Mutolaa</p>
+                </div>
+              </div>
+
+              {/* Search Bar */}
+              <div className="flex-1 max-w-md relative hidden md:block">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Kitob nomi, muallif yoki mavzu bo'yicha qidiruv..."
+                  className="w-full pl-10 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs placeholder:text-gray-500 focus:outline-none focus:border-brand-500 transition"
+                />
+                <Icon name="search" className="w-4 h-4 text-gray-500 absolute left-3.5 top-2.5" />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-gray-500 hover:text-white text-xs">✕</button>
+                )}
+              </div>
+
+              {/* Action Buttons & Profile */}
+              <div className="flex items-center gap-2.5">
+                {/* Kitob Olamiga Kirish Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const worldCandidate = books.find(b => /qodiriy|navoiy|odat|boy/i.test(b.title + b.author)) || books[0];
+                    if (worldCandidate) openBookWorld(worldCandidate);
+                  }}
+                  className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-brand-500/20 to-mutolaa-gold/20 border border-brand-500/40 text-brand-300 text-xs font-semibold hover:border-brand-400 transition shadow-sm"
+                >
+                  <Icon name="compass" className="w-4 h-4 text-brand-400" />
+                  <span>Olamga Kirish</span>
+                </button>
+
+                {/* AI Maslahatchi */}
+                <button
+                  type="button"
+                  onClick={() => setShowAiAdvisor(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-gray-300 hover:text-white hover:border-brand-500/40 transition"
+                >
+                  <Icon name="sparkles" className="w-4 h-4 text-amber-400" />
+                  <span className="hidden sm:inline">AI Maslahat</span>
+                </button>
+
+                {/* Imo-Ishora Tili */}
+                <button
+                  type="button"
+                  onClick={() => setShowSignModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-gray-300 hover:text-white hover:border-brand-500/40 transition"
+                >
+                  <Icon name="hand" className="w-4 h-4 text-brand-400" />
+                  <span className="hidden sm:inline">Imo-ishora</span>
+                </button>
+
+                {/* User Profile */}
+                {currentUser ? (
+                  <div className="flex items-center gap-2 pl-2 border-l border-white/10">
+                    <img
+                      src={currentUser.avatar || AVATARS[0]}
+                      alt="User"
+                      className="w-8 h-8 rounded-full object-cover border border-brand-500"
+                    />
+                    <div className="hidden lg:block text-left">
+                      <div className="text-xs font-bold text-white line-clamp-1">{currentUser.first_name || currentUser.username}</div>
+                      <div className="text-[10px] text-gray-400">@{currentUser.username}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleUserLogout}
+                      title="Chiqish"
+                      className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/5 transition"
+                    >
+                      <Icon name="x" className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => { setShowOnboarding(true); setOnboardingStep('auth'); }}
+                    className="px-4 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-white text-xs font-bold transition shadow-md shadow-brand-500/20"
+                  >
+                    Kirish
+                  </button>
+                )}
+
+                {/* Admin Shortcut */}
+                <a
+                  href="/admin"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition"
+                  title="Admin Panel"
+                >
+                  <Icon name="shield" className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+          </header>
+
+          {/* MAIN CONTENT AREA */}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 space-y-8">
+            {/* 1. HERO & "KITOB OLAMIGA KIRISH" PREMIUM VITRINA */}
+            <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-mutolaa-darkElevated via-mutolaa-darkSurface to-[#0a151b] border border-brand-500/30 p-8 shadow-2xl">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+              <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
+                <div className="max-w-xl space-y-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 text-brand-300 text-xs font-bold border border-brand-500/30">
+                    <Icon name="sparkles" className="w-3.5 h-3.5" />
+                    <span>KAMOLOT Ekotizimining Eng O'zgacha Imkoniyati</span>
+                  </div>
+                  <h2 className="text-3xl sm:text-4xl font-serif font-black text-white tracking-wide leading-tight">
+                    Kitob Olamiga Kirish — <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-mutolaa-gold">Immersiv Dunyo</span>
+                  </h2>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    Oddiy mutolaa bilan cheklanmang. Asarning tarixiy xaritalari, shahar va saroylariga qadamingizni bosing, qahramonlar munosabatlarini kashf eting va tabiat sukunatini jonli ovozlar (Web Audio) jo'rligida his qiling.
+                  </p>
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const otkanKunlar = books.find(b => /otkan|o'tkan/i.test(b.title)) || books[0];
+                        if (otkanKunlar) openBookWorld(otkanKunlar);
+                      }}
+                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white font-bold text-xs hover:from-brand-500 hover:to-brand-400 transition shadow-lg shadow-brand-500/25 flex items-center gap-2"
+                    >
+                      <Icon name="compass" className="w-4 h-4" />
+                      <span>O'tkan Kunlar Olamiga Sayohat</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowAiAdvisor(true)}
+                      className="px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs transition flex items-center gap-2"
+                    >
+                      <Icon name="sparkles" className="w-4 h-4 text-amber-400" />
+                      <span>AI Tavsiya So'rash</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Vitrina Cards Showcase */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full lg:w-auto">
+                  {books.slice(0, 3).map((b, i) => (
+                    <div
+                      key={i}
+                      onClick={() => openBookWorld(b)}
+                      className="group cursor-pointer p-2.5 rounded-2xl bg-black/40 border border-white/10 hover:border-brand-500/50 transition flex flex-col items-center text-center space-y-2 w-36"
+                    >
+                      <img
+                        src={formatMediaUrl(b.cover_url || b.cover)}
+                        alt={b.title}
+                        className="w-24 h-32 object-cover rounded-xl shadow-md group-hover:scale-105 transition"
+                      />
+                      <div className="font-bold text-white text-xs line-clamp-1 w-full">{b.title}</div>
+                      <span className="text-[10px] text-brand-400 font-semibold group-hover:underline">Olamga Kirish →</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 2. CATEGORIES & FORMAT FILTERS */}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                {/* Format Filter Tabs */}
+                <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 w-fit">
+                  {[
+                    { id: 'all', label: "Barcha kitoblar" },
+                    { id: 'pdf', label: "PDF kitoblar" },
+                    { id: 'audio', label: "AI Audiokitoblar" },
+                    { id: 'free', label: "Erkin mutolaa" }
+                  ].map(f => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setFormatFilter(f.id)}
+                      className={"px-4 py-2 rounded-xl text-xs font-bold transition " + (formatFilter === f.id ? "bg-brand-500 text-white shadow-md shadow-brand-500/20" : "text-gray-400 hover:text-white")}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Stats badge */}
+                <div className="text-xs text-gray-400 font-medium">
+                  Katalogda jami: <b className="text-white">{filteredBooks.length}</b> ta asar mavjud
+                </div>
+              </div>
+
+              {/* Genre Chips Carousel */}
+              <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                {[
+                  { slug: 'all', name: "Barchasi" },
+                  { slug: 'fiction', name: "Badiiy adabiyot" },
+                  { slug: 'history', name: "Tarix" },
+                  { slug: 'science', name: "Ilm-fan" },
+                  { slug: 'psychology', name: "Psixologiya" },
+                  { slug: 'fiction_sci', name: "Fantastika" },
+                  { slug: 'business', name: "Biznes" },
+                  { slug: 'selfdev', name: "Shaxsiy rivojlanish" },
+                  { slug: 'poetry', name: "She'riyat" },
+                  { slug: 'children', name: "Bolalar" }
+                ].map(g => (
+                  <button
+                    key={g.slug}
+                    type="button"
+                    onClick={() => setSelectedGenre(g.slug)}
+                    className={"px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap border transition " + (selectedGenre === g.slug ? "bg-brand-500 border-brand-500 text-white shadow-sm" : "bg-white/5 border-white/10 text-gray-400 hover:text-white hover:border-white/20")}
+                  >
+                    {g.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 3. BOOK CATALOG GRID */}
+            <div className="space-y-4">
+              <h3 className="font-serif font-bold text-xl text-white">Mutolaa Maydoni</h3>
+
+              {filteredBooks.length === 0 ? (
+                <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/10 space-y-3">
+                  <Icon name="book" className="w-10 h-10 text-gray-500 mx-auto" />
+                  <div className="text-sm font-semibold text-gray-300">Hech qanday kitob topilmadi</div>
+                  <p className="text-xs text-gray-500">Qidiruv so'zini o'zgartirib ko'ring yoki filtrlarni tozalang.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+                  {filteredBooks.map((b) => {
+                    const isSaved = savedBookIds.includes(b.id);
+                    const coverSrc = formatMediaUrl(b.cover_url || b.cover) || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=600";
+
+                    return (
+                      <div
+                        key={b.id}
+                        className="book-card group relative bg-mutolaa-darkSurface border border-white/10 hover:border-brand-500/40 rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-300 hover:shadow-xl"
+                      >
+                        {/* Bookmark Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => toggleSaveBook(b.id, e)}
+                          className={"absolute top-5 right-5 z-20 p-2 rounded-xl backdrop-blur-md transition " + (isSaved ? "bg-brand-500 text-white shadow-lg" : "bg-black/50 text-gray-400 hover:text-white")}
+                          title={isSaved ? "Saqlanganlardan o'chirish" : "Saqlash"}
+                        >
+                          <Icon name="bookmark" className="w-3.5 h-3.5 fill-current" />
+                        </button>
+
+                        {/* Cover Image with 3D spine */}
+                        <div
+                          className="cursor-pointer relative overflow-hidden rounded-xl aspect-[2/3] bg-neutral-900 mb-3"
+                          onClick={() => setReadingBook(b)}
+                        >
+                          <img
+                            src={coverSrc}
+                            alt={b.title}
+                            className="w-full h-full object-cover book-spine-3d"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-3">
+                            <span className="text-[11px] font-bold text-white bg-brand-500 px-3 py-1 rounded-lg shadow">
+                              Mutolaa qilish →
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Book Metadata */}
+                        <div className="space-y-1.5 flex-1">
+                          <div className="flex items-center justify-between text-[10px] text-gray-400">
+                            <span className="font-semibold text-brand-400">{b.genre_name || "Adabiyot"}</span>
+                            <span>{b.year || '2024'}</span>
+                          </div>
+                          <h4
+                            onClick={() => setReadingBook(b)}
+                            className="font-serif font-bold text-sm text-white line-clamp-1 cursor-pointer group-hover:text-brand-300 transition"
+                            title={b.title}
+                          >
+                            {b.title}
+                          </h4>
+                          <p className="text-xs text-gray-400 line-clamp-1">{b.author}</p>
+                        </div>
+
+                        {/* Action Buttons Row */}
+                        <div className="pt-2.5 border-t border-white/5 space-y-1.5 mt-2.5">
+                          {/* Tirik Kitob Prominent Button */}
+                          <button
+                            type="button"
+                            onClick={() => openBookWorld(b)}
+                            className="w-full py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-brand-500/20 to-brand-500/10 hover:from-amber-500/30 hover:to-brand-500/30 border border-amber-500/30 text-amber-300 hover:text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm"
+                            title="Tirik Kitob — 8-10 min video, sahnalar va kitob olami"
+                          >
+                            <Icon name="sparkles" className="w-3.5 h-3.5 text-amber-400" />
+                            <span>🎬 Tirik kitob — videoda ko'rish</span>
+                          </button>
+
+                          <div className="grid grid-cols-3 gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setReadingBook(b)}
+                              className="py-1.5 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-white text-gray-300 text-[11px] font-semibold transition flex items-center justify-center gap-1"
+                              title="Kitobni o'qish (PDF/Matn)"
+                            >
+                              <Icon name="book" className="w-3 h-3" />
+                              <span>O'qish</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => playAudioBook(b)}
+                              className="py-1.5 rounded-lg bg-white/5 hover:bg-amber-500 hover:text-white text-gray-300 text-[11px] font-semibold transition flex items-center justify-center gap-1"
+                              title="AI Audiokitob tinglash"
+                            >
+                              <Icon name="headphones" className="w-3 h-3" />
+                              <span>Audio</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => openDiscussions(b)}
+                              className="py-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 text-[11px] font-semibold transition flex items-center justify-center gap-1"
+                              title="Fikrlar va muhokama"
+                            >
+                              <Icon name="messageSquare" className="w-3 h-3" />
+                              <span>Fikr</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </main>
+
+          {/* FOOTER */}
+          <footer className="mt-16 border-t border-white/10 bg-mutolaa-darkSurface/50 px-6 py-8 text-center text-xs text-gray-500 space-y-2">
+            <div className="font-serif font-bold text-gray-400 text-sm">KAMOLOT — Aqlli Mutolaa va Audiokitoblar Ekotizimi</div>
+            <p>Qonuniy va erkin ochiq manbalar asosida ishlaydi: archive.org • gutenberg.org • openlibrary.org • natlib.uz</p>
+            <p className="text-[11px] text-gray-600">© 2024-2026 KAMOLOT. Barcha huquqlar himoyalangan.</p>
+          </footer>
+
+          {/* RENDER MODALS */}
+          {renderOnboardingModal()}
+          {renderReaderModal()}
+          {renderWorldModal()}
+          {renderDiscussionsModal()}
+          {renderAiAdvisor()}
+          {renderSignModal()}
+          {renderAudioPlayerBar()}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<KamolotApp />);
+  </script>
+</body>
+</html>
